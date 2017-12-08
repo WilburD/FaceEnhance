@@ -20,7 +20,7 @@ def gaussian_blur(image_array, radius):
             for k in range(3):
                 # 时间完全耗在这一步运算上了
                 a = np.multiply(weight_matrix, image_array[i:(i+2*radius+1), j:(j+2*radius+1), k])
-                image_array_gau[i, j, k] = a.sum()
+                image_array_gau[i+radius, j+radius, k] = a.sum()
     return image_array_gau/255
 
 # 计算二维高斯函数的值G(x, y)
