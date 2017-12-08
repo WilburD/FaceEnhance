@@ -24,7 +24,7 @@ def gaussian_blur(image_array, radius):
                 image_array_gau[i+radius, j+radius, k] = a.sum()
     return image_array_gau/255
 
-# 优化后的高斯模糊函数, 用两次一维卷积代替二维卷积, 原因是高斯函数及其优美性, 但是速度未提升，可能是实验室电脑CPU太好
+# 优化后的高斯模糊函数, 用两次一维卷积代替二维卷积, 原因是高斯函数及其优美性, 但是速度未提升，可能是实验室电脑CPU太好或者np.multiply()的问题
 def gaussian_blur_opti(image_array, radius):
     #1.权重矩阵
     weight_matrix = np.zeros(2*radius+1)
