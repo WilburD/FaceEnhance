@@ -53,6 +53,28 @@ def neural_networks_model(images):
         z_conv2 = tf.nn.relu(a_conv, name=scope.name)
     h_pool2 = max_pool_2x2(z_conv2, 'pool2')
 
+    with tf.variable_scope('conv3') as scope:
+        weights = variable_with_stddev('weights',
+                                       shape=[5, 5, 128, 256],
+                                       stddev=5e-2,
+                                       dtype=tf.float32)
+        biases = variable_on_cpu('biases', [256], tf.constant_initializer(0.1), tf.float32)
+        conv = conv2d(h_pool1, weights)
+        a_conv = tf.nn.bias_add(conv, biases)
+        z_conv3 = tf.nn.relu(a_conv)
+    h_pool3 = max_pool_2x2(z_conv3, 'pool3')
+
+    with tf.variable_scope('conv4') as scope:
+        weights = variable_with_stddev('weights',
+                                       shape=[5, 5, 256, 512],
+                                       stddev=5e-2,
+                                       dtype=tf.float32)
+        biases = variable_on_cpu('biases', [512], tf.constant_initializer(0.1), tf.float32)
+        conv = conv2d(h_pool1, weights)
+        a_conv = tf.nn.bias_add(conv, biases)
+        z_conv4 = tf.nn.relu(a_conv)
+    h_pool4 = max_pool_2x2(z_conv4, 'pool4')
+
     print(h_pool1.shape)
     print(h_pool2.shape)
     return None
