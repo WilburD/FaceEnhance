@@ -204,4 +204,4 @@ Y = tf.cast(Y, tf.float32)
 print(X.shape)
 # neural_networks_model(X[:32], 32)
 save_path = '/home/wanglei/wl/face-enhance/model/model1.ckpt'
-train(X, Y, 500, 10, save_path)
+train(X, Y, 500, 10000, save_path)
