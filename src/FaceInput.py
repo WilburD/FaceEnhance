@@ -13,7 +13,7 @@ def get_labels():
 
 # 根据路径获得图片像素数据
 def get_images_array(path):
-    images_array = np.empty([100, 256, 256, 3])
+    images_array = np.empty([500, 256, 256, 3])
     list_name = []
     for parent, dirnames, filenames in os.walk(path):
         for filename in filenames:
@@ -26,14 +26,18 @@ def get_images_array(path):
         images_array[i] = np.array(image)/255
     return images_array
 
-# X = get_trains()
-# Y = get_labels()
-# # print(X[0].shape)
+# 测试
+def main():
+    X = get_trains()
+    Y = get_labels()
+    print(X[0])
 
-# fig = plt.figure('test')
-# ax = fig.add_subplot(1, 2, 1)
-# ax.imshow(X[0])
-# ax = fig.add_subplot(1, 2, 2)
-# ax.imshow(Y[0])
-# plt.axis('off')
-# plt.show()
+    fig = plt.figure('test')
+    ax = fig.add_subplot(1, 2, 1)
+    ax.imshow(X[0])
+    ax = fig.add_subplot(1, 2, 2)
+    ax.imshow(Y[0])
+    # plt.axis('off')
+    plt.show()
+
+# main()
