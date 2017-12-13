@@ -1,4 +1,4 @@
-
+import tensorflow as tf
 
 # 创建变量
 def variable_on_cpu(name, shape, initializer):
@@ -16,7 +16,7 @@ def conv2d(inputs, filter):
 
 # 反卷积，上采样
 def up_conv2d(inputs, filter, output_shape):
-    strides = [1, 1, 1, 1]
+    strides = [1, 2, 2, 1]
     padding = 'SAME'
     return tf.nn.conv2d_transpose(inputs, filter, output_shape, strides, padding)
 
@@ -27,7 +27,9 @@ def max_pool_2x2(inputs):
     padding = 'SAME'
     return tf.nn.max_pool(inputs, ksize, strides, padding)
 
-def u_net_like_model(images):
+def neural_networks_model(images, batch_size, image_size):
+    size1, size2, size3, size4 = image_size, int(image_size/2), int(image_size/4), int(image_size/8)
+
     # conv1
     with tf.variable_scope('conv1') as scope:
         weights = variable_on_cpu('weights', 
@@ -95,7 +97,7 @@ def u_net_like_model(images):
         weights = variable_on_cpu('weights', 
                                 shape = [5, 5, 512, 1024],
                                 initializer=tf.random_normal_initializer(mean=0, stddev=0.02))
-        up_conv1 = up_conv2d(z_conv5, weights, [batch_size, 8, 8, 512])
+        up_conv1 = up_conv2d(z_conv5, weights, [batch_size, size4, size4, 512])
     
     # up_conv2， 上采样2
     with tf.variable_scope('up_conv2') as scope:
@@ -103,7 +105,7 @@ def u_net_like_model(images):
                                 shape = [5, 5, 256, 512],
                                 initializer=tf.random_normal_initializer(mean=0, stddev=0.02))
         inputs = tf.add(z_conv4, up_conv1)
-        up_conv2 = up_conv2d(inputs, weights, [batch_size, 16, 16, 256])
+        up_conv2 = up_conv2d(inputs, weights, [batch_size, size3, size3, 256])
 
     # up_conv3， 上采样3
     with tf.variable_scope('up_conv3') as scope:
@@ -111,7 +113,7 @@ def u_net_like_model(images):
                                 shape = [5, 5, 128, 256],
                                 initializer=tf.random_normal_initializer(mean=0, stddev=0.02))
         inputs = tf.add(z_conv3, up_conv2)
-        up_conv3 = up_conv2d(inputs, weights, [batch_size, 32, 32, 128])
+        up_conv3 = up_conv2d(inputs, weights, [batch_size, size2, size2, 128])
 
     # up_conv4， 上采样4
     with tf.variable_scope('up_conv4') as scope:
@@ -119,7 +121,7 @@ def u_net_like_model(images):
                                 shape = [5, 5, 64, 128],
                                 initializer=tf.random_normal_initializer(mean=0, stddev=0.02))
         inputs = tf.add(z_conv2, up_conv3)
-        up_conv4 = up_conv2d(inputs, weights, [batch_size, 64, 64, 64])
+        up_conv4 = up_conv2d(inputs, weights, [batch_size, size1, size1, 64])
     
     # conv6
     with tf.variable_scope('conv6') as scope:

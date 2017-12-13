@@ -6,15 +6,17 @@ import matplotlib.pyplot as plt
 
 # 得到训练集
 def get_trains(start, end):
-    outpath_degens = '/home/wanglei/wl/data/webface_degens'
-    return get_images_array(outpath_degens, start, end)
+    # outpath_degens = '/home/wanglei/wl/data/webface_degens'
+    outpath_degens = '/home/wanglei/wl/data/webface_degens_64x64'
+    return get_images_array(outpath_degens, start, end, 64)
 def get_labels(start, end):
-    outpath_labels = '/home/wanglei/wl/data/webface_labels'
-    return get_images_array(outpath_labels, start, end)
+    # outpath_labels = '/home/wanglei/wl/data/webface_labels'
+    outpath_labels = '/home/wanglei/wl/data/webface_labels_64x64'
+    return get_images_array(outpath_labels, start, end, 64)
 
 # 根据路径获得图片像素数据
-def get_images_array(path, start, end):
-    images_array = np.empty([end-start, 256, 256, 3])
+def get_images_array(path, start, end, size):
+    images_array = np.empty([end-start, size, size, 3])
     list_name = []
     for parent, dirnames, filenames in os.walk(path):
         for filename in filenames:

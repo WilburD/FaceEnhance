@@ -1,1 +1,8 @@
-iters:0, batch_add:0, loss:0.0143397 
+iters:0, batch_add:0, loss:0.0714158 
+iters:0, batch_add:32, loss:0.0614393 
+iters:0, batch_add:64, loss:0.0732192 
+iters:0, batch_add:96, loss:0.066665 
+iters:0, batch_add:128, loss:0.0671813 
+iters:0, batch_add:160, loss:0.0678842 
+iters:0, batch_add:192, loss:0.0673803 
+iters:0, batch_add:224, loss:0.0673991 

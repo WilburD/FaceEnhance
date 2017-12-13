@@ -18,6 +18,7 @@ def save_image(Y, inputpath, outpath, iter):
                 break
     np.save(outpath, Y)
 
+# 讲图片存储到相应文件夹
 def save_image(inputpath, outpath_guides, outpath_degens, outpath_labels):
     i = 0;
     for parent, dirnames, filenames in os.walk(inputpath):
@@ -34,6 +35,20 @@ def save_image(inputpath, outpath_guides, outpath_degens, outpath_labels):
             image_label.save(outpath_labels + '/label_' + s + '.png')
             print(filename, i)
             
+# 缩小图像规模
+# 256x256x3 -> 64x64x3
+def downscale_image(inputpath, outpath, size):
+    list_name = []
+    for parent, dirnames, filenames in os.walk(inputpath):
+        for filename in filenames:
+            list_name.append(filename)
+    list_name = sorted(list_name)
+
+    for i in range(len(list_name)):
+        image = Image.open(inputpath + '/' + list_name[i])
+        image = image.resize((size, size), Image.ANTIALIAS)
+        image.save(outpath + '/' + list_name[i])
+        print(outpath + '/' + list_name[i])
 
 inputpath = '/home/wanglei/wl/data/WebFace'
 outpath_guides = '/home/wanglei/wl/data/webface_guides'
@@ -41,5 +56,6 @@ outpath_degens = '/home/wanglei/wl/data/webface_degens'
 outpath_labels = '/home/wanglei/wl/data/webface_labels'
 
 # save_image(inputpath, outpath_guides, outpath_degens, outpath_labels)
-
-        
+# downscale_image(outpath_guides, '/home/wanglei/wl/data/webface_guides_64x64', 64)
+# downscale_image(outpath_degens, '/home/wanglei/wl/data/webface_degens_64x64', 64)
+# downscale_image(outpath_labels, '/home/wanglei/wl/data/webface_labels_64x64', 64)
