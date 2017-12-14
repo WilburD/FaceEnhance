@@ -1,8 +1,5 @@
-iters:0, batch_add:0, loss:0.0714158 
-iters:0, batch_add:32, loss:0.0614393 
-iters:0, batch_add:64, loss:0.0732192 
-iters:0, batch_add:96, loss:0.066665 
-iters:0, batch_add:128, loss:0.0671813 
-iters:0, batch_add:160, loss:0.0678842 
-iters:0, batch_add:192, loss:0.0673803 
-iters:0, batch_add:224, loss:0.0673991 
+iters:0, batch_add:0, loss:0.0698117 
+iters:0, batch_add:800, loss:0.0694393 
+iters:0, batch_add:1600, loss:0.0658272 
+iters:0, batch_add:2400, loss:0.0749448 
+iters:0, batch_add:3200, loss:0.0684126 

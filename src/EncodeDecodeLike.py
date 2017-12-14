@@ -23,7 +23,9 @@ def max_pool_2x2(x, name):
     return tf.nn.max_pool(x, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME', name=name)
 
 # 神经网络模型
-def neural_networks_model(images, batch_size):
+def neural_networks_model(images, batch_size, image_size):
+    size1, size2, size3, size4, size5 = image_size, int(image_size/2), int(image_size/4), int(image_size/8), int(image_size/16)
+    
     # conv1
     with tf.variable_scope('conv1') as scope:
         weights = variable_with_stddev('weights',
@@ -34,7 +36,6 @@ def neural_networks_model(images, batch_size):
         conv = conv2d(images, weights)
         a_conv = tf.nn.bias_add(conv, biases)
         z_conv = tf.nn.relu(a_conv, name=scope.name)
-        # z_conv = tf.nn.sigmoid(a_conv, name=scope.name)
     # pool1
     with tf.variable_scope('pool1') as scope:
         h_pool = max_pool_2x2(z_conv, 'pool1')
@@ -49,7 +50,6 @@ def neural_networks_model(images, batch_size):
         conv = conv2d(h_pool, weights)
         a_conv = tf.nn.bias_add(conv, biases)
         z_conv = tf.nn.relu(a_conv, name=scope.name)
-        # z_conv = tf.nn.sigmoid(a_conv, name=scope.name)
     # pool2
     with tf.variable_scope('pool2') as scope:
         h_pool = max_pool_2x2(z_conv, 'pool2')
@@ -64,7 +64,6 @@ def neural_networks_model(images, batch_size):
         conv = conv2d(h_pool, weights)
         a_conv = tf.nn.bias_add(conv, biases)
         z_conv = tf.nn.relu(a_conv, name=scope.name)
-        # z_conv = tf.nn.sigmoid(a_conv, name=scope.name)
     # pool3
     with tf.variable_scope('pool3') as scope:
         h_pool = max_pool_2x2(z_conv, 'pool3')
@@ -79,7 +78,6 @@ def neural_networks_model(images, batch_size):
         conv = conv2d(h_pool, weights)
         a_conv = tf.nn.bias_add(conv, biases)
         z_conv = tf.nn.relu(a_conv, name=scope.name)
-        # z_conv = tf.nn.sigmoid(a_conv, name=scope.name)
     # pool4
     with tf.variable_scope('pool4') as scope:
         h_pool = max_pool_2x2(z_conv, 'pool4')
@@ -94,7 +92,6 @@ def neural_networks_model(images, batch_size):
         conv = conv2d(h_pool, weights)
         a_conv = tf.nn.bias_add(conv, biases)
         z_conv = tf.nn.relu(a_conv, name=scope.name)
-        # z_conv = tf.nn.sigmoid(a_conv, name=scope.name)
     # pool5
     with tf.variable_scope('pool5') as scope:
         h_pool = max_pool_2x2(z_conv, 'pool5')
@@ -108,7 +105,7 @@ def neural_networks_model(images, batch_size):
                                        dtype=tf.float32)
         de_conv = tf.nn.conv2d_transpose(h_pool, 
                                         kfilter, 
-                                        output_shape=[batch_size, 16, 16, 512],
+                                        output_shape=[batch_size, size5, size5, 512],
                                         strides = [1, 2, 2, 1],
                                         padding = 'SAME')
     
@@ -120,7 +117,7 @@ def neural_networks_model(images, batch_size):
                                        dtype=tf.float32)
         de_conv = tf.nn.conv2d_transpose(de_conv, 
                                         kfilter, 
-                                        output_shape=[batch_size, 32, 32, 256],
+                                        output_shape=[batch_size, size4, size4, 256],
                                         strides = [1, 2, 2, 1],
                                         padding = 'SAME')
 
@@ -132,7 +129,7 @@ def neural_networks_model(images, batch_size):
                                        dtype=tf.float32)
         de_conv = tf.nn.conv2d_transpose(de_conv, 
                                         kfilter, 
-                                        output_shape=[batch_size, 64, 64, 128],
+                                        output_shape=[batch_size, size3, size3, 128],
                                         strides = [1, 2, 2, 1],
                                         padding = 'SAME')
 
@@ -144,7 +141,7 @@ def neural_networks_model(images, batch_size):
                                        dtype=tf.float32)
         de_conv = tf.nn.conv2d_transpose(de_conv, 
                                         kfilter, 
-                                        output_shape=[batch_size, 128, 128, 64],
+                                        output_shape=[batch_size, size2, size2, 64],
                                         strides = [1, 2, 2, 1],
                                         padding = 'SAME')
 
@@ -156,7 +153,7 @@ def neural_networks_model(images, batch_size):
                                        dtype=tf.float32)
         de_conv = tf.nn.conv2d_transpose(de_conv, 
                                         kfilter, 
-                                        output_shape=[batch_size, 256, 256, 3],
+                                        output_shape=[batch_size, size1, size1, 3],
                                         strides = [1, 2, 2, 1],
                                         padding = 'SAME')
     output_images = tf.nn.sigmoid(de_conv)

@@ -1,5 +1,8 @@
 import tensorflow as tf
 
+# UNet增强网络
+# 4次下采样、4次上采样
+
 # 创建变量
 def variable_on_cpu(name, shape, initializer):
     with tf.device('/cpu:0'):
