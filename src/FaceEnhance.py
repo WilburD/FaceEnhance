@@ -34,6 +34,7 @@ def train(iters, batch_size, train_num, model_path, image_size, model_type):
     output_images = neural_networks_model(xs, batch_size, image_size, model_type)
     cost_function = compute_loss(output_images, ys)
     train_step = tf.train.GradientDescentOptimizer(1e-2).minimize(cost_function)
+    # train_step = tf.train.AdamOptimizer(1e-4).minimize(cost_function)
 
     saver = tf.train.Saver()
     file_log = open('log.txt', 'wt')
@@ -79,7 +80,7 @@ def predict(input_image, label_image, save_path, image_size, model_type):
 # 训练测试UNet model
 def u_net_main():
     iters = 5000 # 迭代次数
-    batch_size = 32 
+    batch_size = 32
     train_num = 5000 # 训练集数量
     image_size = 64 # 图片大小
     model_type = 'unet'
