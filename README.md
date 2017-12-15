@@ -4,6 +4,10 @@
 ## 简介
 本系统目的是使模糊的人脸图片变清晰。
 
+## 网络结构
+#### UNetLike
+![image](https://github.com/wangleihitcs/face-enhance/raw/master/resource/UNetLike.png)
+
 ## 测试
 #### 测试1
 ![image](https://github.com/wangleihitcs/face-enhance/raw/master/resource/test1.png)
