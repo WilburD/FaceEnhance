@@ -86,15 +86,15 @@ def u_net_main():
     iters = 1000 # 迭代次数
     batch_size = 32
     train_num = 256 # 训练集数量
-    image_size = 64 # 图片大小
+    image_size = 64
     model_type = 'unet'
     model_path_unet = '/home/wanglei/wl/model/model_unet.ckpt' # UNet model 256x256
     model_path_unet_64x64 = '/home/wanglei/wl/model/model_unet_64x64.ckpt' # UNet model 64x64
 
-    # t = 100001
-    # imagedata = FaceInput.ImageData(0, 1, 256)
-    # x = imagedata.get_image_by_path('/home/wanglei/wl/face-enhance/resource/yangmi22.jpg')
-    # y = imagedata.get_image_by_path('/home/wanglei/wl/face-enhance/resource/yangmi11.jpg')
+    t = 100001
+    imagedata = FaceInput.ImageData(0, 1, 256)
+    x = imagedata.get_image_by_path('/home/wanglei/wl/face-enhance/resource/yangmi22.jpg')
+    y = imagedata.get_image_by_path('/home/wanglei/wl/face-enhance/resource/yangmi11.jpg')
 
     # t = 0
     # x, y = inputs(t, t+1, image_size)
