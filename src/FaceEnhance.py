@@ -33,7 +33,7 @@ def train(iters, batch_size, train_num, model_path, image_size, model_type):
 
     output_images = neural_networks_model(xs, batch_size, image_size, model_type)
     cost_function = compute_loss(output_images, ys)
-    train_step = tf.train.GradientDescentOptimizer(0.05).minimize(cost_function)
+    train_step = tf.train.GradientDescentOptimizer(0.12).minimize(cost_function)
     # train_step = tf.train.AdamOptimizer(1e-4).minimize(cost_function)
 
     saver = tf.train.Saver()
@@ -96,15 +96,15 @@ def u_net_main():
     # x = imagedata.get_image_by_path('/home/wanglei/wl/face-enhance/resource/yangmi22.jpg')
     # y = imagedata.get_image_by_path('/home/wanglei/wl/face-enhance/resource/yangmi11.jpg')
 
-    t = 0
-    x, y = inputs(t, t+1, image_size)
+    # t = 0
+    # x, y = inputs(t, t+1, image_size)
 
     if image_size == 256:
         # train(iters, batch_size, train_num, model_path_unet, image_size, model_type)
         predict(x, y, model_path_unet_64x64, image_size, model_type, t)
     else : # 64x64 
-        # train(iters, batch_size, train_num, model_path_unet_64x64, image_size, model_type)
-        predict(x, y, model_path_unet_64x64, image_size, model_type, t)
+        train(iters, batch_size, train_num, model_path_unet_64x64, image_size, model_type)
+        # predict(x, y, model_path_unet_64x64, image_size, model_type, t)
     
 
 # 训练测试EncodeDecode model

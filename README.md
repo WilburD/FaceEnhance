@@ -3,3 +3,6 @@
 
 ## 简介
 本系统目的是使模糊的人脸图片变清晰。
+
+## 测试
+![image](https://github.com/wangleihitcs/face-enhance/raw/master/resource/test1.png)

@@ -188,5 +188,24 @@ def neural_networks_model(images, batch_size, image_size):
         a_conv = tf.nn.bias_add(conv, biases)
         z_conv11 = tf.nn.relu(a_conv, name=scope.name)
 
-    output_images = tf.nn.sigmoid(z_conv11)
+    # output_images = tf.nn.sigmoid(z_conv11)
+    # fully connected
+    # x0 = tf.reshape(z_conv11, [batch_size, size1*size1*3])
+    # with tf.variable_scope('fc1') as scope:
+    #     weights = variable_on_cpu('weights',
+    #                             shape = [size1*size1*3, 1024],
+    #                             initializer=tf.random_normal_initializer(mean=0, stddev=0.02))
+    #     biases = variable_on_cpu('biases', [1024], tf.constant_initializer(0.1))
+    #     a_conv = tf.matmul(x0, weights) + biases
+    #     z_fc1 = tf.nn.relu(a_conv)
+    # with tf.variable_scope('fc1') as scope:
+    #     weights = variable_on_cpu('weights',
+    #                             shape = [size1*size1*3, 512],
+    #                             initializer=tf.random_normal_initializer(mean=0, stddev=0.02))
+    #     biases = variable_on_cpu('biases', [512], tf.constant_initializer(0.1))
+    #     a_conv = tf.matmul(z_fc1, weights) + biases
+    #     z_fc2 = tf.nn.relu(a_conv)
+    
+    # output_images = tf.reshape(z_fc2, [batch_size, size1, size1, 3])
+    output_images = tf.nn.relu(z_conv11)
     return output_images
