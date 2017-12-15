@@ -19,6 +19,13 @@ class ImageData:
     def get_label_images(self):
         return get_labels(self.start, self.end, self.image_size)
 
+    # 按照指定路径得到图片
+    def get_image_by_path(self, path):
+        images_array = np.empty([1, self.image_size, self.image_size, 3])
+        image = Image.open(path)
+        images_array[0] = np.array(image)/255
+        return images_array
+    
 # start 初始图片序号
 # end 结束图片序号
 # image_size 图片大小，宽度和高度

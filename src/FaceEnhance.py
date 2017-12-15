@@ -33,7 +33,7 @@ def train(iters, batch_size, train_num, model_path, image_size, model_type):
 
     output_images = neural_networks_model(xs, batch_size, image_size, model_type)
     cost_function = compute_loss(output_images, ys)
-    train_step = tf.train.GradientDescentOptimizer(1e-2).minimize(cost_function)
+    train_step = tf.train.GradientDescentOptimizer(0.05).minimize(cost_function)
     # train_step = tf.train.AdamOptimizer(1e-4).minimize(cost_function)
 
     saver = tf.train.Saver()
@@ -47,19 +47,22 @@ def train(iters, batch_size, train_num, model_path, image_size, model_type):
             for t in range(0, train_num-batch_size, batch_size):
                 xs_batch, ys_batch = inputs(t, t+batch_size, image_size)
                 sess.run(train_step, feed_dict={xs:xs_batch, ys:ys_batch})
-                if t % 100 == 0:
+                if t % 32 == 0:
                     cost = sess.run(cost_function, feed_dict={xs: xs_batch, ys: ys_batch})
                     # loss.append(cost)
                     print('iters:%s, batch_add:%s, loss:%s' % (i, t, cost))
-                    file_log.write('iters:%s, batch_add:%s, loss:%s \n' % (i, t, cost))
+                    file_log.write('iters:%s, batch:%s, loss:%s \n' % (i, t, cost))
+            file_log.write('--------------------------------------------------------------\n')
+            print('--------------------------------------------------------------')
             if i % 20 == 0:
                 saver.save(sess, model_path)
+                print('*******************保存成功*******************')
     
     # writer.close()
     sess.close()
 
 # 预测
-def predict(input_image, label_image, save_path, image_size, model_type):
+def predict(input_image, label_image, save_path, image_size, model_type, it):
     output_image = neural_networks_model(tf.cast(input_image ,tf.float32), 1, image_size, model_type)
     saver = tf.train.Saver()
     with tf.Session() as sess:
@@ -75,24 +78,33 @@ def predict(input_image, label_image, save_path, image_size, model_type):
         ax = fig.add_subplot(1, 3, 3)
         ax.imshow(label_image[0])
         plt.axis('off')
+        plt.savefig('/home/wanglei/图片/' + str(it) + '.png')
         plt.show()
 
 # 训练测试UNet model
 def u_net_main():
-    iters = 5000 # 迭代次数
+    iters = 1000 # 迭代次数
     batch_size = 32
-    train_num = 5000 # 训练集数量
+    train_num = 256 # 训练集数量
     image_size = 64 # 图片大小
     model_type = 'unet'
     model_path_unet = '/home/wanglei/wl/model/model_unet.ckpt' # UNet model 256x256
     model_path_unet_64x64 = '/home/wanglei/wl/model/model_unet_64x64.ckpt' # UNet model 64x64
-    x, y = inputs(0, 1, image_size)
+
+    # t = 100001
+    # imagedata = FaceInput.ImageData(0, 1, 256)
+    # x = imagedata.get_image_by_path('/home/wanglei/wl/face-enhance/resource/yangmi22.jpg')
+    # y = imagedata.get_image_by_path('/home/wanglei/wl/face-enhance/resource/yangmi11.jpg')
+
+    t = 0
+    x, y = inputs(t, t+1, image_size)
+
     if image_size == 256:
         # train(iters, batch_size, train_num, model_path_unet, image_size, model_type)
-        predict(x, y, model_path_unet_64x64, image_size, model_type)
+        predict(x, y, model_path_unet_64x64, image_size, model_type, t)
     else : # 64x64 
-        train(iters, batch_size, train_num, model_path_unet_64x64, image_size, model_type)
-        # predict(x, y, model_path_unet_64x64, image_size, model_type)
+        # train(iters, batch_size, train_num, model_path_unet_64x64, image_size, model_type)
+        predict(x, y, model_path_unet_64x64, image_size, model_type, t)
     
 
 # 训练测试EncodeDecode model
@@ -107,10 +119,10 @@ def encode_decode_main():
     x, y = inputs(0, 1, image_size)
     if image_size == 256: # 256x256
         # train(iters, batch_size, train_num, model_path_path_endecode, image_size, model_type)
-        predict(x, y, model_path_endecode_64x64, image_size, model_type)
+        predict(x, y, model_path_endecode_64x64, image_size, model_type, t)
     else : # 64x64 
         # train(iters, batch_size, train_num, model_path_endecode_64x64, image_size, model_type)
-        predict(x, y, model_path_endecode_64x64, image_size, model_type)
+        predict(x, y, model_path_endecode_64x64, image_size, model_type, t)
 
 u_net_main()
 # encode_decode_main()

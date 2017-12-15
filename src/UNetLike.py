@@ -94,48 +94,99 @@ def neural_networks_model(images, batch_size, image_size):
         conv = conv2d(h_pool, weights)
         a_conv = tf.nn.bias_add(conv, biases)
         z_conv5 = tf.nn.relu(a_conv, name=scope.name)
+    
+    # conv6
+    with tf.variable_scope('conv6') as scope:
+        weights = variable_on_cpu('weights', 
+                                shape = [3, 3, 1024, 1024],
+                                initializer=tf.random_normal_initializer(mean=0, stddev=0.02))
+        biases = variable_on_cpu('biases', [1024], tf.constant_initializer(0.1))
+        conv = conv2d(z_conv5, weights)
+        a_conv = tf.nn.bias_add(conv, biases)
+        z_conv6 = tf.nn.relu(a_conv, name=scope.name)
 
     # up_conv1，上采样1
     with tf.variable_scope('up_conv1') as scope:
         weights = variable_on_cpu('weights', 
                                 shape = [5, 5, 512, 1024],
                                 initializer=tf.random_normal_initializer(mean=0, stddev=0.02))
-        up_conv1 = up_conv2d(z_conv5, weights, [batch_size, size4, size4, 512])
+        up_conv1 = up_conv2d(z_conv6, weights, [batch_size, size4, size4, 512])
     
+    # conv7
+    with tf.variable_scope('conv7') as scope:
+        weights = variable_on_cpu('weights', 
+                                shape = [5, 5, 1024, 512],
+                                initializer=tf.random_normal_initializer(mean=0, stddev=0.02))
+        biases = variable_on_cpu('biases', [512], tf.constant_initializer(0.1))
+        inputs = tf.concat([z_conv4, up_conv1], axis=3)
+        conv = conv2d(inputs, weights)
+        a_conv = tf.nn.bias_add(conv, biases)
+        z_conv7 = tf.nn.relu(a_conv, name=scope.name)
+
     # up_conv2， 上采样2
     with tf.variable_scope('up_conv2') as scope:
         weights = variable_on_cpu('weights', 
                                 shape = [5, 5, 256, 512],
                                 initializer=tf.random_normal_initializer(mean=0, stddev=0.02))
-        inputs = tf.add(z_conv4, up_conv1)
-        up_conv2 = up_conv2d(inputs, weights, [batch_size, size3, size3, 256])
+        up_conv2 = up_conv2d(z_conv7, weights, [batch_size, size3, size3, 256])
+
+    # conv8
+    with tf.variable_scope('conv8') as scope:
+        weights = variable_on_cpu('weights', 
+                                shape = [5, 5, 512, 256],
+                                initializer=tf.random_normal_initializer(mean=0, stddev=0.02))
+        biases = variable_on_cpu('biases', [256], tf.constant_initializer(0.1))
+        inputs = tf.concat([z_conv3, up_conv2], axis=3)
+        conv = conv2d(inputs, weights)
+        a_conv = tf.nn.bias_add(conv, biases)
+        z_conv8 = tf.nn.relu(a_conv, name=scope.name)
+    
 
     # up_conv3， 上采样3
     with tf.variable_scope('up_conv3') as scope:
         weights = variable_on_cpu('weights', 
                                 shape = [5, 5, 128, 256],
                                 initializer=tf.random_normal_initializer(mean=0, stddev=0.02))
-        inputs = tf.add(z_conv3, up_conv2)
-        up_conv3 = up_conv2d(inputs, weights, [batch_size, size2, size2, 128])
+        up_conv3 = up_conv2d(z_conv8, weights, [batch_size, size2, size2, 128])
+
+    # conv9
+    with tf.variable_scope('conv9') as scope:
+        weights = variable_on_cpu('weights', 
+                                shape = [5, 5, 256, 128],
+                                initializer=tf.random_normal_initializer(mean=0, stddev=0.02))
+        biases = variable_on_cpu('biases', [128], tf.constant_initializer(0.1))
+        inputs = tf.concat([z_conv2, up_conv3], axis=3)
+        conv = conv2d(inputs, weights)
+        a_conv = tf.nn.bias_add(conv, biases)
+        z_conv9 = tf.nn.relu(a_conv, name=scope.name)
 
     # up_conv4， 上采样4
     with tf.variable_scope('up_conv4') as scope:
         weights = variable_on_cpu('weights', 
                                 shape = [5, 5, 64, 128],
                                 initializer=tf.random_normal_initializer(mean=0, stddev=0.02))
-        inputs = tf.add(z_conv2, up_conv3)
-        up_conv4 = up_conv2d(inputs, weights, [batch_size, size1, size1, 64])
+        up_conv4 = up_conv2d(z_conv9, weights, [batch_size, size1, size1, 64])
     
-    # conv6
-    with tf.variable_scope('conv6') as scope:
+    # conv10
+    with tf.variable_scope('conv10') as scope:
+        weights = variable_on_cpu('weights', 
+                                shape = [5, 5, 128, 64],
+                                initializer=tf.random_normal_initializer(mean=0, stddev=0.02))
+        biases = variable_on_cpu('biases', [64], tf.constant_initializer(0.1))
+        inputs = tf.concat([z_conv1, up_conv4], axis=3)
+        conv = conv2d(inputs, weights)
+        a_conv = tf.nn.bias_add(conv, biases)
+        z_conv10 = tf.nn.relu(a_conv, name=scope.name)
+
+    # conv11
+    with tf.variable_scope('conv11') as scope:
         weights = variable_on_cpu('weights', 
                                 shape = [5, 5, 64, 3],
                                 initializer=tf.random_normal_initializer(mean=0, stddev=0.02))
         biases = variable_on_cpu('biases', [3], tf.constant_initializer(0.1))
-        inputs = tf.add(z_conv1, up_conv4)
-        conv = conv2d(inputs, weights)
+        conv = conv2d(z_conv10, weights)
         a_conv = tf.nn.bias_add(conv, biases)
-        z_conv6 = tf.nn.relu(a_conv, name=scope.name)
+        z_conv11 = tf.nn.relu(a_conv, name=scope.name)
 
-    output_images = tf.nn.sigmoid(z_conv6)
+    output_images = tf.nn.sigmoid(z_conv11)
     return output_images

@@ -2,20 +2,13 @@ from PIL import Image, ImageFilter
 import numpy as np
 import os, random
 
-# 对训练集图像重新打乱
-def random_sort(imagepath):
-    list_name = []
-    for parent, dirnames, filenames in os.walk(imagepath):
-        for filename in filenames:
-            list_name.append(filename)
-    list_name = sorted(list_name)
-    list_name_s = list_name
-    random.shuffle(list_name_s)
+# 将图片缩小成指定大小
+def shrink_image(inputpath, outputpath, size):
+    image = Image.open(inputpath)
+    image = image.resize((size, size), Image.ANTIALIAS)
+    image.save(outputpath)
 
-    for i in range(5000):
-        print(list_name_s[i])
-
-# 讲图片存储到相应文件夹
+# 讲图片存储到相应文件夹, 随机打乱
 def save_image(inputpath, outpath_guides, outpath_degens, outpath_labels):
     os.mkdir(outpath_guides)
     os.mkdir(outpath_degens)
@@ -66,8 +59,15 @@ outpath_guides = '/home/wanglei/wl/data/webface_guides'
 outpath_degens = '/home/wanglei/wl/data/webface_degens'
 outpath_labels = '/home/wanglei/wl/data/webface_labels'
 
-save_image(inputpath, outpath_guides, outpath_degens, outpath_labels)
+# save_image(inputpath, outpath_guides, outpath_degens, outpath_labels)
 # random_sort(outpath_guides)
 # downscale_image(outpath_guides, '/home/wanglei/wl/data/webface_guides_64x64', 64)
 # downscale_image(outpath_degens, '/home/wanglei/wl/data/webface_degens_64x64', 64)
 # downscale_image(outpath_labels, '/home/wanglei/wl/data/webface_labels_64x64', 64)
+
+# shrink_image('/home/wanglei/wl/face-enhance/resource/yangmi1.jpg', 
+#             '/home/wanglei/wl/face-enhance/resource/yangmi11.jpg', 
+#             256)
+# shrink_image('/home/wanglei/wl/face-enhance/resource/yangmi2.jpg', 
+#             '/home/wanglei/wl/face-enhance/resource/yangmi22.jpg', 
+#             256)
