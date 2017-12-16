@@ -156,6 +156,6 @@ def neural_networks_model(images, batch_size, image_size):
                                         output_shape=[batch_size, size1, size1, 3],
                                         strides = [1, 2, 2, 1],
                                         padding = 'SAME')
-    output_images = tf.nn.sigmoid(de_conv)
-    # print(output_images)
+    output_images = tf.nn.relu(de_conv)
+    # output_images = tf.nn.sigmoid(de_conv)
     return output_images

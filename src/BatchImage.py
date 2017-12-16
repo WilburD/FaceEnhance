@@ -65,9 +65,6 @@ outpath_labels = '/home/wanglei/wl/data/webface_labels'
 # downscale_image(outpath_degens, '/home/wanglei/wl/data/webface_degens_64x64', 64)
 # downscale_image(outpath_labels, '/home/wanglei/wl/data/webface_labels_64x64', 64)
 
-# shrink_image('/home/wanglei/wl/face-enhance/resource/yangmi1.jpg', 
-#             '/home/wanglei/wl/face-enhance/resource/yangmi11.jpg', 
-#             256)
-# shrink_image('/home/wanglei/wl/face-enhance/resource/yangmi2.jpg', 
-#             '/home/wanglei/wl/face-enhance/resource/yangmi22.jpg', 
+# shrink_image('/home/wanglei/图片/test.jpg', 
+#             '/home/wanglei/图片/test1.jpg', 
 #             256)
