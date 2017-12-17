@@ -14,3 +14,6 @@
 
 #### 测试2
 ![image](https://github.com/wangleihitcs/face-enhance/raw/master/resource/test2.png)
+
+#### 测试3
+![image](https://github.com/wangleihitcs/face-enhance/raw/master/resource/test3.png)

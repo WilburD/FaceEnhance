@@ -30,7 +30,7 @@ def neural_networks_model(images, batch_size, image_size):
     with tf.variable_scope('conv1') as scope:
         weights = variable_with_stddev('weights',
                                         shape = [5, 5, 3, 64],
-                                        stddev = 5e-2,
+                                        stddev = 2e-2,
                                         dtype = tf.float32)
         biases = variable_on_cpu('biases', [64], tf.constant_initializer(0.1), tf.float32)
         conv = conv2d(images, weights)
@@ -44,7 +44,7 @@ def neural_networks_model(images, batch_size, image_size):
     with tf.variable_scope('conv2') as scope:
         weights = variable_with_stddev('weights',
                                         shape = [5, 5, 64, 128],
-                                        stddev = 5e-2,
+                                        stddev = 2e-2,
                                         dtype = tf.float32)
         biases = variable_on_cpu('biases', [128], tf.constant_initializer(0.1), tf.float32)
         conv = conv2d(h_pool, weights)
@@ -58,7 +58,7 @@ def neural_networks_model(images, batch_size, image_size):
     with tf.variable_scope('conv3') as scope:
         weights = variable_with_stddev('weights',
                                        shape=[5, 5, 128, 256],
-                                       stddev=5e-2,
+                                       stddev=2e-2,
                                        dtype=tf.float32)
         biases = variable_on_cpu('biases', [256], tf.constant_initializer(0.1), tf.float32)
         conv = conv2d(h_pool, weights)
@@ -72,7 +72,7 @@ def neural_networks_model(images, batch_size, image_size):
     with tf.variable_scope('conv4') as scope:
         weights = variable_with_stddev('weights',
                                        shape=[5, 5, 256, 512],
-                                       stddev=5e-2,
+                                       stddev=2e-2,
                                        dtype=tf.float32)
         biases = variable_on_cpu('biases', [512], tf.constant_initializer(0.1), tf.float32)
         conv = conv2d(h_pool, weights)
@@ -86,7 +86,7 @@ def neural_networks_model(images, batch_size, image_size):
     with tf.variable_scope('conv5') as scope:
         weights = variable_with_stddev('weights',
                                        shape=[5, 5, 512, 1024],
-                                       stddev=5e-2,
+                                       stddev=2e-2,
                                        dtype=tf.float32)
         biases = variable_on_cpu('biases', [1024], tf.constant_initializer(0.1), tf.float32)
         conv = conv2d(h_pool, weights)
@@ -101,7 +101,7 @@ def neural_networks_model(images, batch_size, image_size):
     with tf.variable_scope('deconv1') as scope:
         kfilter = variable_with_stddev('filters',
                                        shape=[5, 5, 512, 1024],
-                                       stddev=5e-2,
+                                       stddev=2e-2,
                                        dtype=tf.float32)
         de_conv = tf.nn.conv2d_transpose(h_pool, 
                                         kfilter, 
@@ -113,7 +113,7 @@ def neural_networks_model(images, batch_size, image_size):
     with tf.variable_scope('deconv2') as scope:
         kfilter = variable_with_stddev('filters',
                                        shape=[5, 5, 256, 512],
-                                       stddev=5e-2,
+                                       stddev=2e-2,
                                        dtype=tf.float32)
         de_conv = tf.nn.conv2d_transpose(de_conv, 
                                         kfilter, 
@@ -125,7 +125,7 @@ def neural_networks_model(images, batch_size, image_size):
     with tf.variable_scope('deconv3') as scope:
         kfilter = variable_with_stddev('filters',
                                        shape=[5, 5, 128, 256],
-                                       stddev=5e-2,
+                                       stddev=2e-2,
                                        dtype=tf.float32)
         de_conv = tf.nn.conv2d_transpose(de_conv, 
                                         kfilter, 
@@ -137,7 +137,7 @@ def neural_networks_model(images, batch_size, image_size):
     with tf.variable_scope('deconv4') as scope:
         kfilter = variable_with_stddev('filters',
                                        shape=[5, 5, 64, 128],
-                                       stddev=5e-2,
+                                       stddev=2e-2,
                                        dtype=tf.float32)
         de_conv = tf.nn.conv2d_transpose(de_conv, 
                                         kfilter, 
@@ -149,7 +149,7 @@ def neural_networks_model(images, batch_size, image_size):
     with tf.variable_scope('deconv5') as scope:
         kfilter = variable_with_stddev('filters',
                                        shape=[5, 5, 3, 64],
-                                       stddev=5e-2,
+                                       stddev=2e-2,
                                        dtype=tf.float32)
         de_conv = tf.nn.conv2d_transpose(de_conv, 
                                         kfilter, 
