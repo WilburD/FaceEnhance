@@ -1,7 +1,8 @@
 # 本系统的深度学习神经网络模型
 import tensorflow as tf
 import numpy as np
-import FaceInput, EncodeDecodeLike, UNetLike
+import FaceInput, EncodeDecodeLike
+from model import GoodNet
 import matplotlib.pyplot as plt
 
 # 处理获取数据集
@@ -16,7 +17,8 @@ def inputs(start, end, image_size):
 # 网络模型
 def neural_networks_model(xs, batch_size, image_size, model_type):
     if model_type == 'unet':
-        model = UNetLike.neural_networks_model(xs, batch_size, image_size)
+        goodnet = GoodNet.GoodNet(xs, 0)
+        model = goodnet.good_net_model(batch_size, image_size, image_size)
     else:
         model = EncodeDecodeLike.neural_networks_model(xs, batch_size, image_size)
     return model
@@ -32,15 +34,15 @@ def train(iters, batch_size, train_num, model_path, image_size, model_type):
     ys = tf.placeholder(tf.float32, [None, image_size, image_size, 3])
 
     output_images = neural_networks_model(xs, batch_size, image_size, model_type)
-    cost_function = compute_loss(output_images[:, 100:156, 100:128], ys[:, 100:156, 100:128])
-    train_step = tf.train.GradientDescentOptimizer(0.012).minimize(cost_function)
+    cost_function = compute_loss(output_images, ys)
+    train_step = tf.train.GradientDescentOptimizer(0.02).minimize(cost_function)
     # train_step = tf.train.AdamOptimizer(1e-4).minimize(cost_function)
 
     saver = tf.train.Saver()
     file_log = open('log.txt', 'wt')
     with tf.Session() as sess:
-        sess.run(tf.global_variables_initializer())
-        # saver.restore(sess, model_path)
+        # sess.run(tf.global_variables_initializer())
+        saver.restore(sess, model_path)
         # writer = tf.summary.FileWriter('./graphs', sess.graph)
 
         for i in range(iters):
@@ -90,7 +92,7 @@ def predict(input_image, label_image, save_path, image_size, model_type, it):
 
 # 训练测试UNet model
 def u_net_main():
-    iters = 100000 # 迭代次数
+    iters = 5000 # 迭代次数
     batch_size = 1
     train_num = 2 # 训练集数量
     image_size = 256
@@ -105,12 +107,12 @@ def u_net_main():
     # x = imagedata.get_image_by_path('/home/wanglei/图片/test1.jpg')
     # y = imagedata.get_image_by_path('/home/wanglei/图片/test1.jpg')
 
-    t = 0
+    t = 100
     x, y = inputs(t, t+1, image_size)
 
     if image_size == 256:
-        train(iters, batch_size, train_num, model_path_unet, image_size, model_type)
-        # predict(x, y, model_path_unet, image_size, model_type, t)
+        # train(iters, batch_size, train_num, model_path_unet, image_size, model_type)
+        predict(x, y, model_path_unet, image_size, model_type, t)
         # predict(x, y, model_path_unet_64x64, image_size, model_type, t)
     else : # 64x64 
         # train(iters, batch_size, train_num, model_path_unet_64x64, image_size, model_type)

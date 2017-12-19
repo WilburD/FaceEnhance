@@ -30,8 +30,9 @@ def max_pool_2x2(inputs):
     padding = 'SAME'
     return tf.nn.max_pool(inputs, ksize, strides, padding)
 
-def neural_networks_model(images, batch_size, image_size):
-    size1, size2, size3, size4 = image_size, int(image_size/2), int(image_size/4), int(image_size/8)
+def neural_networks_model(images, batch_size, width, height):
+    width1, width2, width3, width4 = width, int(width/2), int(width/4), int(width/8)
+    height1, height2, height3, height4 = height, int(height/2), int(height/4), int(height/8)
 
     # conv1
     with tf.variable_scope('conv1') as scope:
@@ -110,7 +111,7 @@ def neural_networks_model(images, batch_size, image_size):
         weights = variable_on_cpu('weights', 
                                 shape = [5, 5, 512, 1024],
                                 initializer=tf.random_normal_initializer(mean=0, stddev=0.02))
-        up_conv1 = up_conv2d(z_conv6, weights, [batch_size, size4, size4, 512])
+        up_conv1 = up_conv2d(z_conv6, weights, [batch_size, width4, height4, 512])
     
     # conv7
     with tf.variable_scope('conv7') as scope:
@@ -128,7 +129,7 @@ def neural_networks_model(images, batch_size, image_size):
         weights = variable_on_cpu('weights', 
                                 shape = [5, 5, 256, 512],
                                 initializer=tf.random_normal_initializer(mean=0, stddev=0.02))
-        up_conv2 = up_conv2d(z_conv7, weights, [batch_size, size3, size3, 256])
+        up_conv2 = up_conv2d(z_conv7, weights, [batch_size, width3, height3, 256])
 
     # conv8
     with tf.variable_scope('conv8') as scope:
@@ -147,7 +148,7 @@ def neural_networks_model(images, batch_size, image_size):
         weights = variable_on_cpu('weights', 
                                 shape = [5, 5, 128, 256],
                                 initializer=tf.random_normal_initializer(mean=0, stddev=0.02))
-        up_conv3 = up_conv2d(z_conv8, weights, [batch_size, size2, size2, 128])
+        up_conv3 = up_conv2d(z_conv8, weights, [batch_size, width2, height2, 128])
 
     # conv9
     with tf.variable_scope('conv9') as scope:
@@ -165,7 +166,7 @@ def neural_networks_model(images, batch_size, image_size):
         weights = variable_on_cpu('weights', 
                                 shape = [5, 5, 64, 128],
                                 initializer=tf.random_normal_initializer(mean=0, stddev=0.02))
-        up_conv4 = up_conv2d(z_conv9, weights, [batch_size, size1, size1, 64])
+        up_conv4 = up_conv2d(z_conv9, weights, [batch_size, width1, height1, 64])
     
     # conv10
     with tf.variable_scope('conv10') as scope:
