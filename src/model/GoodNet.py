@@ -1,6 +1,5 @@
 import tensorflow as tf
-import UNetLike
-
+from model import UNetLike
 
 # fully convolution networks
 class GoodNet:
@@ -32,7 +31,8 @@ class GoodNet:
         """
         var = tf.get_variable(name = name,
                             shape = shape,
-                            initializer = initializer)
+                            initializer = initializer, 
+                            dtype = tf.float32)
         return var
     
 
@@ -47,7 +47,8 @@ class GoodNet:
             output_channals:
         Return:
             z_conv: Tensor, conv layer outputs
-
+            weights:
+            biases:
         """
         weights = self.variable_on_cpu('wights',
                                 shape = [window_size, window_size, input_channals, output_channals],
@@ -56,7 +57,7 @@ class GoodNet:
         conv = tf.nn.conv2d(inputs, weights, strides=[1, 1, 1, 1], padding='SAME')
         a_conv = tf.nn.bias_add(conv, biases)
         z_conv = tf.nn.relu(a_conv)
-        return z_conv
+        return z_conv, weights, biases
 
     # 创建池化层
     def pool_layer(self, inputs):
@@ -86,6 +87,7 @@ class GoodNet:
             output_channals
         Return:
             deconv: Tensor, deconv layer outputs
+            kfilters:
 
         """
 
@@ -97,10 +99,10 @@ class GoodNet:
                                         output_shape = [batch_size, width, height, output_channals],
                                         strides = [1, 2, 2, 1],
                                         padding = 'SAME')
-        return deconv
+        return deconv, kfiters
 
-    # 网络1结构
-    def good_net_model(self, batch_size, width, height):
+    # Coarse网络结构
+    def coarse_net_model(self, batch_size, width, height):
         """Build the GoodNet model
 
         Args:
@@ -111,55 +113,30 @@ class GoodNet:
             predict_images: Tensor, same with labels
 
         """
-        width1, width2, width3, width4 = width, int(width/2), int(width/4), int(width/8)
-        height1, height2, height3, height4 = height, int(height/2), int(height/4), int(height/8)
+        predict_images, coarse_parms = self.u_net_2_model(batch_size, width, height)
 
-        # conv1
-        with tf.variable_scope('conv1') as scope:
-            z_conv1 = self.conv_layer(self.images, 5, 3, 64)
-        
-        # pool1 下采样1
-        with tf.variable_scope('pool1') as scope:
-            h_pool1 = self.pool_layer(z_conv1)
-        
-        # conv01
-        with tf.variable_scope('conv01') as scope:
-            z_conv01 = self.conv_layer(h_pool1, 5, 64, 128)
-        
-        # pool2 下采样2
-        with tf.variable_scope('pool2') as scope:
-            h_pool2 = self.pool_layer(z_conv01)
-        
-        # conv02
-        with tf.variable_scope('conv02') as scope:
-            z_conv02 = self.conv_layer(h_pool2, 5, 128, 128)
+        return predict_images, coarse_parms
 
-        # deconv1 上采样1
-        with tf.variable_scope('deconv1') as scope:
-            deconv1 = self.deconv_layer(z_conv02, 5, batch_size, width2, height2, 128, 128)
-        
-        # conv12
-        with tf.variable_scope('conv11') as scope:
-            z_conv12 = self.conv_layer(deconv1, 5, 128, 64)
+    # Coarse loss function
+    def coarse_loss(self, coarse_images):
+        """compute the Coarse Stage loss
 
-        # deconv2 上采样2
-        with tf.variable_scope('deconv2') as scope:
-            deconv2 = self.deconv_layer(z_conv12, 5, batch_size, width1, height1, 64, 64)
-        
-        # conv12
-        with tf.variable_scope('conv12') as scope:
-            z_conv12 = self.conv_layer(deconv2, 5, 64, 3)
-        
-        
-        predict_images = z_conv12
+        Args:
+            coarse_images: Tensor, the coarse stage predict_images
+        Returns:
+            coares_loss: value is coares stage loss
+            
+        """
 
-        return predict_images
+        coares_loss = tf.reduce_mean(tf.square(self.labels - coarse_images))
+        return coares_loss
 
-    # 网络2结构
-    def u_net_model(self, batch_size, width, height):
+    # Fine网络结构
+    def fine_net_model(self, coarse_images, batch_size, width, height):
         """Build th U-Net model
 
         Args:
+            coarse_images:
             batch_size: value to batch train, value = 16,32,64,...abs
             width: value is image's width, value = 256,...abs
             height: value is image's height, value = 256,...abs
@@ -167,6 +144,96 @@ class GoodNet:
             predict_images: Tensor, same with labels
 
         """
+
+        predict_images, fine_parms = UNetLike.neural_networks_model(coarse_images, batch_size, width, height)
+
+        return predict_images, fine_parms
+
+    # Fine loss function
+    def fine_loss(self, fine_images):
+        """compute the Fine Stage loss
+
+        Args:
+            fine_images: Tensor, the coarse stage predict_images
+        Returns:
+            fine_loss: value is coares stage loss
+            
+        """
+
+        fine_loss = tf.reduce_mean(tf.square(self.labels[:, 100:200, 120:200] - fine_images[:, 100:200, 120:200]))
+        return fine_loss
+
+    # 子网络结构
+    def u_net_2_model(self, batch_size, width, height):
+        """Build the GoodNet model
+
+        Args:
+            batch_size: value to batch train, value = 16,32,64,...abs
+            width: value is image's width, value = 256,...abs
+            height: value is image's height, value = 256,...abs
+        Return:
+            predict_images: Tensor, same with labels
+            u_net_2_parms
+        """
+        width1, width2, width3, width4 = width, int(width/2), int(width/4), int(width/8)
+        height1, height2, height3, height4 = height, int(height/2), int(height/4), int(height/8)
+
+        u_net_2_parms = []
+
+        # conv1
+        with tf.variable_scope('u_net2_conv1') as scope:
+            z_conv1, weights, biases = self.conv_layer(self.images, 5, 3, 64)
+            u_net_2_parms.append(weights)
+            u_net_2_parms.append(biases)
+
+        # pool1 下采样1
+        with tf.variable_scope('u_net2_pool1') as scope:
+            h_pool1 = self.pool_layer(z_conv1)
         
-        predict_images = UNetLike.neural_networks_model(self.images, batch_size, width, height)
-        return predict_images
+        # conv01
+        with tf.variable_scope('u_net2_conv01') as scope:
+            z_conv01, weights, biases = self.conv_layer(h_pool1, 5, 64, 128)
+            u_net_2_parms.append(weights)
+            u_net_2_parms.append(biases)
+        
+        # pool2 下采样2
+        with tf.variable_scope('u_net2_pool2') as scope:
+            h_pool2 = self.pool_layer(z_conv01)
+        
+        # conv02
+        with tf.variable_scope('u_net2_conv02') as scope:
+            z_conv02, weights, biases = self.conv_layer(h_pool2, 5, 128, 256)
+            u_net_2_parms.append(weights)
+            u_net_2_parms.append(biases)
+        
+        # conv2
+        with tf.variable_scope('u_net2_conv2') as scope:
+            z_conv2, weights4, biases4  = self.conv_layer(z_conv02, 5, 256, 256)
+
+        # deconv1 上采样1
+        with tf.variable_scope('u_net2_deconv1') as scope:
+            deconv1, kfilters = self.deconv_layer(z_conv02, 5, batch_size, width2, height2, 256, 128)
+            u_net_2_parms.append(kfilters)
+
+        # conv11
+        with tf.variable_scope('u_net2_conv11') as scope:
+            inputs = tf.concat([z_conv01, deconv1], axis=3)
+            z_conv11, weights, biases = self.conv_layer(inputs, 5, 256, 128)
+            u_net_2_parms.append(weights)
+            u_net_2_parms.append(biases)
+
+        # deconv2 上采样2
+        with tf.variable_scope('u_net2_deconv2') as scope:
+            deconv2, kfilters = self.deconv_layer(z_conv11, 5, batch_size, width1, height1, 128, 64)
+            u_net_2_parms.append(kfilters)
+            
+        # conv12
+        with tf.variable_scope('u_net2_conv12') as scope:
+            inputs = tf.concat([z_conv1, deconv2], axis=3)
+            z_conv12, weights, biases = self.conv_layer(inputs, 5, 128, 3)
+            u_net_2_parms.append(weights)
+            u_net_2_parms.append(biases)
+        
+        predict_images = z_conv12
+
+        return predict_images, u_net_2_parms

@@ -1,7 +1,7 @@
 # 本系统的深度学习神经网络模型
 import tensorflow as tf
 import numpy as np
-import FaceInput, EncodeDecodeLike
+import FaceInput
 from model import GoodNet
 import matplotlib.pyplot as plt
 
@@ -18,9 +18,9 @@ def inputs(start, end, image_size):
 def neural_networks_model(xs, batch_size, image_size, model_type):
     if model_type == 'unet':
         goodnet = GoodNet.GoodNet(xs, 0)
-        model = goodnet.good_net_model(batch_size, image_size, image_size)
-    else:
-        model = EncodeDecodeLike.neural_networks_model(xs, batch_size, image_size)
+        # model = goodnet.coarse_net_model(batch_size, image_size, image_size)
+        # model = goodnet.fine_net_model(batch_size, image_size, image_size)
+        # model = goodnet.u_net_2_model(batch_size, image_size, image_size)
     return model
 
 # 代价函数, 欧式距离
@@ -29,41 +29,80 @@ def compute_loss(output_images, label_images):
     return loss
 
 # 训练
-def train(iters, batch_size, train_num, model_path, image_size, model_type):
+def train(iters, batch_size, train_num, model_path, image_size):
     xs = tf.placeholder(tf.float32, [None, image_size, image_size, 3])
     ys = tf.placeholder(tf.float32, [None, image_size, image_size, 3])
 
-    output_images = neural_networks_model(xs, batch_size, image_size, model_type)
-    cost_function = compute_loss(output_images, ys)
-    train_step = tf.train.GradientDescentOptimizer(0.02).minimize(cost_function)
-    # train_step = tf.train.AdamOptimizer(1e-4).minimize(cost_function)
+    goodnet = GoodNet.GoodNet(xs, ys)
+    coarse_images, coarse_parms = goodnet.coarse_net_model(batch_size, image_size, image_size)
+    coarse_loss = goodnet.coarse_loss(coarse_images)
+
+    fine_images, fine_parms = goodnet.fine_net_model(coarse_images, batch_size, image_size, image_size)
+    fine_loss = goodnet.fine_loss(fine_images)
+
+    coarse_train_step = tf.train.GradientDescentOptimizer(0.02).minimize(coarse_loss, 
+                                                                        var_list=coarse_parms)
+    # print(coarse_parms)
+    fine_train_step = tf.train.GradientDescentOptimizer(0.02).minimize(fine_loss, 
+                                                                        var_list=fine_parms)
 
     saver = tf.train.Saver()
     file_log = open('log.txt', 'wt')
     with tf.Session() as sess:
-        # sess.run(tf.global_variables_initializer())
+        sess.run(tf.global_variables_initializer())
         saver.restore(sess, model_path)
         # writer = tf.summary.FileWriter('./graphs', sess.graph)
 
+        for k in range(100):
+            xs_batch, ys_batch = inputs(t, t+batch_size, image_size)
+            sess.run(coarse_train_step, feed_dict={xs:xs_batch, ys:ys_batch})
+            cost1 = sess.run(coarse_loss, feed_dict={xs: xs_batch, ys: ys_batch})
+            cost2 = sess.run(fine_loss, feed_dict={xs: xs_batch, ys: ys_batch})
+            print('iters:%s, batch:%s, loss1:%s, loss2:%s' % (-1, k, cost1, cost2))
+            file_log.write('iters:%s, t:%s, loss1:%s, loss2:%s' % (-1, k, cost1, cost2))
+
+        flag = 0
         for i in range(iters):
             print('--------------------------------------------------------------')
             file_log.write('--------------------------------------------------------------\n')
-            for t in range(0, train_num-batch_size, batch_size):
+
+            for t in range(0, train_num, batch_size):
                 xs_batch, ys_batch = inputs(t, t+batch_size, image_size)
-                sess.run(train_step, feed_dict={xs:xs_batch, ys:ys_batch})
+
+                cost1 = sess.run(coarse_loss, feed_dict={xs: xs_batch, ys: ys_batch})
+                cost2 = sess.run(fine_loss, feed_dict={xs: xs_batch, ys: ys_batch})
+                if flag == 1:
+                    sess.run(coarse_train_step, feed_dict={xs:xs_batch, ys:ys_batch})
+                else:
+                    sess.run(fine_train_step, feed_dict={xs:xs_batch, ys:ys_batch})
                 if t % 1 == 0:
-                    cost = sess.run(cost_function, feed_dict={xs: xs_batch, ys: ys_batch})
-                    print('iters:%s, batch_add:%s, loss:%s' % (i, t, cost))
-                    file_log.write('iters:%s, batch:%s, loss:%s \n' % (i, t, cost))
-            # if i % 50 == 0:
-            #     print('--------------------------------------------------------------')
-            #     t = 0
-            #     cost = sess.run(cost_function, feed_dict={xs: xs_batch, ys: ys_batch})
-            #     # loss.append(cost)
-            #     print('iters:%s, batch_add:%s, loss:%s' % (i, t, cost))
-            #     file_log.write('iters:%s, batch:%s, loss:%s \n' % (i, t, cost))
-            # file_log.write('--------------------------------------------------------------\n')
-            if i % 20 == 0:
+                    cost1 = sess.run(coarse_loss, feed_dict={xs: xs_batch, ys: ys_batch})
+                    cost2 = sess.run(fine_loss, feed_dict={xs: xs_batch, ys: ys_batch})
+                    print('iters:%s, batch:%s, loss1:%s, loss2:%s' % (i, t, cost1, cost2))
+                    file_log.write('iters:%s, t:%s, loss1:%s, loss2:%s' % (i, t, cost1, cost2))
+            if i % 100 == 0:
+                xs_batch, ys_batch = inputs(0, 8, image_size)
+                cost1 = sess.run(coarse_loss, feed_dict={xs: xs_batch, ys: ys_batch})
+                cost2 = sess.run(fine_loss, feed_dict={xs: xs_batch, ys: ys_batch})
+                print('************cost1:%s, cost2:%s **********' % (cost1, cost2))
+                if cost1 < cost2:
+                    flag = 1
+                else:
+                    flag = 0
+
+            if i % 50 == 0:
+                xs_batch, ys_batch = inputs(0, 8, image_size)
+                predict_images1 = sess.run(coarse_images, feed_dict={xs: xs_batch, ys: ys_batch})
+                predict_images2 = sess.run(fine_images, feed_dict={xs: xs_batch, ys: ys_batch})
+                fig = plt.figure()
+                ax = fig.add_subplot(1, 2, 1)
+                ax.imshow(predict_images1[0])
+                plt.axis('off')
+                ax = fig.add_subplot(1, 2, 2)
+                ax.imshow(predict_images2[0])
+                plt.axis('off')
+                plt.savefig('/home/wanglei/图片/' + str(i) + '.png')
+                # plt.show()
                 saver.save(sess, model_path)
                 print('***********************保存成功***********************')
     
@@ -71,12 +110,17 @@ def train(iters, batch_size, train_num, model_path, image_size, model_type):
     sess.close()
 
 # 预测
-def predict(input_image, label_image, save_path, image_size, model_type, it):
-    output_image = neural_networks_model(tf.cast(input_image ,tf.float32), 1, image_size, model_type)
+def predict(input_image, label_image, save_path, image_size, it):
+    goodnet = GoodNet.GoodNet(tf.cast(input_image ,tf.float32), 0)
+    coarse_images, p1 = goodnet.coarse_net_model(1, image_size, image_size)
+
+    fine_images, p2= goodnet.fine_net_model(coarse_images, 1, image_size, image_size)
+
     saver = tf.train.Saver()
     with tf.Session() as sess:
         saver.restore(sess, save_path)
-        predict_image = output_image.eval(session = sess)
+        predict_image = coarse_images.eval(session = sess)
+        # predict_image = fine_images.eval(session = sess)
         fig = plt.figure()
         ax = fig.add_subplot(1, 3, 1)
         ax.imshow(input_image[0])
@@ -87,18 +131,16 @@ def predict(input_image, label_image, save_path, image_size, model_type, it):
         ax = fig.add_subplot(1, 3, 3)
         ax.imshow(label_image[0])
         plt.axis('off')
-        plt.savefig('/home/wanglei/图片/' + str(it) + '.png')
+        # plt.savefig('/home/wanglei/图片/' + str(it) + '.png')
         plt.show()
 
 # 训练测试UNet model
 def u_net_main():
-    iters = 5000 # 迭代次数
-    batch_size = 1
-    train_num = 2 # 训练集数量
+    iters = 50000 # 迭代次数
+    batch_size = 8
+    train_num = 32 # 训练集数量
     image_size = 256
-    model_type = 'unet'
     model_path_unet = '/home/wanglei/wl/model/model_unet.ckpt' # UNet model 256x256
-    model_path_unet_64x64 = '/home/wanglei/wl/model/model_unet_64x64.ckpt' # UNet model 64x64
 
     # t = 100001
     # imagedata = FaceInput.ImageData(0, 1, 256)
@@ -111,33 +153,8 @@ def u_net_main():
     x, y = inputs(t, t+1, image_size)
 
     if image_size == 256:
-        # train(iters, batch_size, train_num, model_path_unet, image_size, model_type)
-        predict(x, y, model_path_unet, image_size, model_type, t)
-        # predict(x, y, model_path_unet_64x64, image_size, model_type, t)
-    else : # 64x64 
-        # train(iters, batch_size, train_num, model_path_unet_64x64, image_size, model_type)
-        predict(x, y, model_path_unet_64x64, image_size, model_type, t)
+        train(iters, batch_size, train_num, model_path_unet, image_size)
+        # predict(x, y, model_path_unet, image_size, t)
     return 0
-    
-
-# 训练测试EncodeDecode model
-def encode_decode_main():
-    iters = 5000 # 迭代次数
-    batch_size = 32 
-    train_num = 256 # 训练集数量
-    image_size = 64
-    model_type = 'endecode'
-    model_path_endecode = '/home/wanglei/wl/model/model_endecode.ckpt' # EncodeDecode model 256x256
-    model_path_endecode_64x64 = '/home/wanglei/wl/model/model_endecode_64x64.ckpt' # EncodeDecode model 64x64
-    
-    t = 0
-    x, y = inputs(t, t+1, image_size)
-    if image_size == 256: # 256x256
-        # train(iters, batch_size, train_num, model_path_path_endecode, image_size, model_type)
-        predict(x, y, model_path_endecode_64x64, image_size, model_type, t)
-    else : # 64x64 
-        # train(iters, batch_size, train_num, model_path_endecode_64x64, image_size, model_type)
-        predict(x, y, model_path_endecode_64x64, image_size, model_type, t)
 
 u_net_main()
-# encode_decode_main()
