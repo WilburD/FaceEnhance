@@ -50,16 +50,8 @@ def train(iters, batch_size, train_num, model_path, image_size):
     file_log = open('log.txt', 'wt')
     with tf.Session() as sess:
         sess.run(tf.global_variables_initializer())
-        saver.restore(sess, model_path)
+        # saver.restore(sess, model_path)
         # writer = tf.summary.FileWriter('./graphs', sess.graph)
-
-        for k in range(100):
-            xs_batch, ys_batch = inputs(t, t+batch_size, image_size)
-            sess.run(coarse_train_step, feed_dict={xs:xs_batch, ys:ys_batch})
-            cost1 = sess.run(coarse_loss, feed_dict={xs: xs_batch, ys: ys_batch})
-            cost2 = sess.run(fine_loss, feed_dict={xs: xs_batch, ys: ys_batch})
-            print('iters:%s, batch:%s, loss1:%s, loss2:%s' % (-1, k, cost1, cost2))
-            file_log.write('iters:%s, t:%s, loss1:%s, loss2:%s' % (-1, k, cost1, cost2))
 
         flag = 0
         for i in range(iters):
@@ -69,8 +61,8 @@ def train(iters, batch_size, train_num, model_path, image_size):
             for t in range(0, train_num, batch_size):
                 xs_batch, ys_batch = inputs(t, t+batch_size, image_size)
 
-                cost1 = sess.run(coarse_loss, feed_dict={xs: xs_batch, ys: ys_batch})
-                cost2 = sess.run(fine_loss, feed_dict={xs: xs_batch, ys: ys_batch})
+                # cost1 = sess.run(coarse_loss, feed_dict={xs: xs_batch, ys: ys_batch})
+                # cost2 = sess.run(fine_loss, feed_dict={xs: xs_batch, ys: ys_batch})
                 if flag == 1:
                     sess.run(coarse_train_step, feed_dict={xs:xs_batch, ys:ys_batch})
                 else:
@@ -78,28 +70,28 @@ def train(iters, batch_size, train_num, model_path, image_size):
                 if t % 1 == 0:
                     cost1 = sess.run(coarse_loss, feed_dict={xs: xs_batch, ys: ys_batch})
                     cost2 = sess.run(fine_loss, feed_dict={xs: xs_batch, ys: ys_batch})
-                    print('iters:%s, batch:%s, loss1:%s, loss2:%s' % (i, t, cost1, cost2))
-                    file_log.write('iters:%s, t:%s, loss1:%s, loss2:%s' % (i, t, cost1, cost2))
+                    print('iters:%s,batch:%s, loss1:%s,loss2:%s' % (i, t, cost1, cost2))
+                    file_log.write('iters:%s,batch:%s, loss1:%s,loss2:%s' % (i, t, cost1, cost2))
             if i % 100 == 0:
-                xs_batch, ys_batch = inputs(0, 8, image_size)
+                xs_batch, ys_batch = inputs(0, batch_size, image_size)
                 cost1 = sess.run(coarse_loss, feed_dict={xs: xs_batch, ys: ys_batch})
                 cost2 = sess.run(fine_loss, feed_dict={xs: xs_batch, ys: ys_batch})
                 print('************cost1:%s, cost2:%s **********' % (cost1, cost2))
                 if cost1 < cost2:
-                    flag = 1
-                else:
                     flag = 0
+                else:
+                    flag = 1
 
-            if i % 50 == 0:
-                xs_batch, ys_batch = inputs(0, 8, image_size)
-                predict_images1 = sess.run(coarse_images, feed_dict={xs: xs_batch, ys: ys_batch})
-                predict_images2 = sess.run(fine_images, feed_dict={xs: xs_batch, ys: ys_batch})
+            if i % 200 == 0:
+                xs_batch, ys_batch = inputs(0, batch_size, image_size)
+                predict_images1 = sess.run(coarse_images[0], feed_dict={xs: xs_batch, ys: ys_batch})
+                predict_images2 = sess.run(fine_images[0], feed_dict={xs: xs_batch, ys: ys_batch})
                 fig = plt.figure()
                 ax = fig.add_subplot(1, 2, 1)
-                ax.imshow(predict_images1[0])
+                ax.imshow(predict_images1)
                 plt.axis('off')
                 ax = fig.add_subplot(1, 2, 2)
-                ax.imshow(predict_images2[0])
+                ax.imshow(predict_images2)
                 plt.axis('off')
                 plt.savefig('/home/wanglei/图片/' + str(i) + '.png')
                 # plt.show()
@@ -119,26 +111,29 @@ def predict(input_image, label_image, save_path, image_size, it):
     saver = tf.train.Saver()
     with tf.Session() as sess:
         saver.restore(sess, save_path)
-        predict_image = coarse_images.eval(session = sess)
-        # predict_image = fine_images.eval(session = sess)
+        predict_image1 = coarse_images.eval(session = sess)
+        predict_image2 = fine_images.eval(session = sess)
         fig = plt.figure()
-        ax = fig.add_subplot(1, 3, 1)
+        ax = fig.add_subplot(2, 2, 1)
         ax.imshow(input_image[0])
         plt.axis('off')
-        ax = fig.add_subplot(1, 3, 2)
-        ax.imshow(predict_image[0])
-        plt.axis('off')
-        ax = fig.add_subplot(1, 3, 3)
+        ax = fig.add_subplot(2, 2, 2)
         ax.imshow(label_image[0])
         plt.axis('off')
-        # plt.savefig('/home/wanglei/图片/' + str(it) + '.png')
+        ax = fig.add_subplot(2, 2, 3)
+        ax.imshow(predict_image1[0])
+        plt.axis('off')
+        ax = fig.add_subplot(2, 2, 4)
+        ax.imshow(predict_image2[0])
+        plt.axis('off')
+        plt.savefig('/home/wanglei/图片/' + str(it) + '.png')
         plt.show()
 
 # 训练测试UNet model
 def u_net_main():
     iters = 50000 # 迭代次数
-    batch_size = 8
-    train_num = 32 # 训练集数量
+    batch_size = 1
+    train_num = 1 # 训练集数量
     image_size = 256
     model_path_unet = '/home/wanglei/wl/model/model_unet.ckpt' # UNet model 256x256
 
@@ -149,7 +144,7 @@ def u_net_main():
     # x = imagedata.get_image_by_path('/home/wanglei/图片/test1.jpg')
     # y = imagedata.get_image_by_path('/home/wanglei/图片/test1.jpg')
 
-    t = 100
+    t = 20
     x, y = inputs(t, t+1, image_size)
 
     if image_size == 256:

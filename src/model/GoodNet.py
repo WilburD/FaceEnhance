@@ -160,8 +160,9 @@ class GoodNet:
             
         """
 
-        fine_loss = tf.reduce_mean(tf.square(self.labels[:, 100:200, 120:200] - fine_images[:, 100:200, 120:200]))
-        return fine_loss
+        fine_loss1 = tf.reduce_mean(tf.square(self.labels[:, 100:200, 120:200] - fine_images[:, 100:200, 120:200]))
+        fine_loss2 = tf.reduce_mean(tf.square(self.labels - fine_images))
+        return (fine_loss1 + fine_loss2)/2
 
     # 子网络结构
     def u_net_2_model(self, batch_size, width, height):
