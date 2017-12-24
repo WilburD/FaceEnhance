@@ -145,8 +145,8 @@ class GoodNet:
 
         """
 
-        predict_images, fine_parms = UNetLike.neural_networks_model(coarse_images, batch_size, width, height)
-
+        # predict_images, fine_parms = UNetLike.neural_networks_model(coarse_images, batch_size, width, height)
+        predict_images, fine_parms = self.sr_net_model()
         return predict_images, fine_parms
 
     # Fine loss function
@@ -160,11 +160,11 @@ class GoodNet:
             
         """
 
-        fine_loss1 = tf.reduce_mean(tf.square(self.labels[:, 100:200, 120:200] - fine_images[:, 100:200, 120:200]))
-        fine_loss2 = tf.reduce_mean(tf.square(self.labels - fine_images))
-        return (fine_loss1 + fine_loss2)/2
+        # fine_loss1 = tf.reduce_mean(tf.square(self.labels[:, 100:200, 120:200] - fine_images[:, 100:200, 120:200]))
+        fine_loss2 = tf.reduce_mean(tf.square(self.labels[:, 0:244, 0:244] - fine_images))
+        return fine_loss2
 
-    # 子网络结构
+    # 子网络结构: 2次下采样U-Net
     def u_net_2_model(self, batch_size, width, height):
         """Build the GoodNet model
 
@@ -175,66 +175,151 @@ class GoodNet:
         Return:
             predict_images: Tensor, same with labels
             u_net_2_parms
+
         """
-        width1, width2, width3, width4 = width, int(width/2), int(width/4), int(width/8)
-        height1, height2, height3, height4 = height, int(height/2), int(height/4), int(height/8)
+
+        width1, width2 = width, int(width/2)
+        height1, height2 = height, int(height/2)
 
         u_net_2_parms = []
 
-        # conv1
-        with tf.variable_scope('u_net2_conv1') as scope:
-            z_conv1, weights, biases = self.conv_layer(self.images, 5, 3, 64)
+        # conv11
+        with tf.variable_scope('u_net2_conv11') as scope:
+            z_conv11, weights, biases = self.conv_layer(self.images, 3, 3, 64)
+            u_net_2_parms.append(weights)
+            u_net_2_parms.append(biases)
+        # conv12
+        with tf.variable_scope('u_net2_conv12') as scope:
+            z_conv12, weights, biases = self.conv_layer(z_conv11, 3, 64, 64)
             u_net_2_parms.append(weights)
             u_net_2_parms.append(biases)
 
         # pool1 下采样1
         with tf.variable_scope('u_net2_pool1') as scope:
-            h_pool1 = self.pool_layer(z_conv1)
+            h_pool1 = self.pool_layer(z_conv12)
         
-        # conv01
-        with tf.variable_scope('u_net2_conv01') as scope:
-            z_conv01, weights, biases = self.conv_layer(h_pool1, 5, 64, 128)
+        # conv21
+        with tf.variable_scope('u_net2_conv21') as scope:
+            z_conv21, weights, biases = self.conv_layer(h_pool1, 3, 64, 128)
+            u_net_2_parms.append(weights)
+            u_net_2_parms.append(biases)
+        # conv22
+        with tf.variable_scope('u_net2_conv22') as scope:
+            z_conv22, weights, biases = self.conv_layer(z_conv21, 3, 128, 128)
             u_net_2_parms.append(weights)
             u_net_2_parms.append(biases)
         
         # pool2 下采样2
         with tf.variable_scope('u_net2_pool2') as scope:
-            h_pool2 = self.pool_layer(z_conv01)
+            h_pool2 = self.pool_layer(z_conv22)
         
-        # conv02
-        with tf.variable_scope('u_net2_conv02') as scope:
-            z_conv02, weights, biases = self.conv_layer(h_pool2, 5, 128, 256)
+        # conv31
+        with tf.variable_scope('u_net2_conv31') as scope:
+            z_conv31, weights, biases = self.conv_layer(h_pool2, 3, 128, 256)
             u_net_2_parms.append(weights)
             u_net_2_parms.append(biases)
-        
-        # conv2
-        with tf.variable_scope('u_net2_conv2') as scope:
-            z_conv2, weights4, biases4  = self.conv_layer(z_conv02, 5, 256, 256)
+        # conv32
+        with tf.variable_scope('u_net2_conv32') as scope:
+            z_conv32, weights, biases = self.conv_layer(z_conv31, 3, 256, 256)
+            u_net_2_parms.append(weights)
+            u_net_2_parms.append(biases)
 
         # deconv1 上采样1
         with tf.variable_scope('u_net2_deconv1') as scope:
-            deconv1, kfilters = self.deconv_layer(z_conv02, 5, batch_size, width2, height2, 256, 128)
+            deconv1, kfilters = self.deconv_layer(z_conv32, 3, batch_size, width2, height2, 256, 128)
             u_net_2_parms.append(kfilters)
 
-        # conv11
-        with tf.variable_scope('u_net2_conv11') as scope:
-            inputs = tf.concat([z_conv01, deconv1], axis=3)
-            z_conv11, weights, biases = self.conv_layer(inputs, 5, 256, 128)
+        # conv41
+        with tf.variable_scope('u_net2_conv41') as scope:
+            inputs = tf.concat([z_conv22, deconv1], axis=3)
+            z_conv41, weights, biases = self.conv_layer(inputs, 3, 256, 128)
+            u_net_2_parms.append(weights)
+            u_net_2_parms.append(biases)
+        # conv42
+        with tf.variable_scope('u_net2_conv42') as scope:
+            z_conv42, weights, biases = self.conv_layer(z_conv41, 3, 128, 128)
             u_net_2_parms.append(weights)
             u_net_2_parms.append(biases)
 
         # deconv2 上采样2
         with tf.variable_scope('u_net2_deconv2') as scope:
-            deconv2, kfilters = self.deconv_layer(z_conv11, 5, batch_size, width1, height1, 128, 64)
+            deconv2, kfilters = self.deconv_layer(z_conv42, 3, batch_size, width1, height1, 128, 64)
             u_net_2_parms.append(kfilters)
             
-        # conv12
-        with tf.variable_scope('u_net2_conv12') as scope:
-            inputs = tf.concat([z_conv1, deconv2], axis=3)
-            z_conv12, weights, biases = self.conv_layer(inputs, 5, 128, 3)
+        # conv51
+        with tf.variable_scope('u_net2_conv51') as scope:
+            inputs = tf.concat([z_conv12, deconv2], axis=3)
+            z_conv51, weights, biases = self.conv_layer(inputs, 5, 128, 64)
+            u_net_2_parms.append(weights)
+            u_net_2_parms.append(biases)
+        # conv52
+        with tf.variable_scope('u_net2_conv52') as scope:
+            z_conv52, weights, biases = self.conv_layer(z_conv51, 3, 64, 64)
+            u_net_2_parms.append(weights)
+            u_net_2_parms.append(biases)
+        # conv53
+        with tf.variable_scope('u_net2_conv53') as scope:
+            z_conv53, weights, biases = self.conv_layer(z_conv52, 3, 64, 3)
             u_net_2_parms.append(weights)
             u_net_2_parms.append(biases)
         
-        predict_images = z_conv12
-
+        predict_images = z_conv53
         return predict_images, u_net_2_parms
+
+    # 子网络结构: SRCNN 超分辨率卷积网络
+    # Dong C, Chen C L, He K, et al. Image Super-Resolution Using Deep Convolutional Networks[J].
+    #  IEEE Transactions on Pattern Analysis & Machine Intelligence, 2016, 38(2):295.
+    def sr_net_model(self):
+        """Build the SRCNN model
+
+        Args:
+            batch_size: value to batch train, value = 16,32,64,...abs
+            width: value is image's width, value = 256,...abs
+            height: value is image's height, value = 256,...abs
+        Return:
+            predict_images: Tensor, same with labels
+            sr_net_parms:
+            
+        """
+
+        sr_net_parms = []
+
+        # conv1, patch extraction and representation
+        with tf.variable_scope('srcnn_conv1') as scope:
+            weights = self.variable_on_cpu('wights',
+                                shape = [9, 9, 3, 64],
+                                initializer = tf.truncated_normal_initializer(mean=0, stddev=0.005))
+            biases = self.variable_on_cpu('biases', [64], tf.constant_initializer(0.01))
+            conv = tf.nn.conv2d(self.images, weights, strides=[1, 1, 1, 1], padding='VALID')
+            a_conv = tf.nn.bias_add(conv, biases)
+            z_conv1 = tf.nn.relu(a_conv)
+            sr_net_parms.append(weights)
+            sr_net_parms.append(biases)
+
+        # conv2, non-liner mapping
+        with tf.variable_scope('srcnn_conv2') as scope:
+            weights = self.variable_on_cpu('wights',
+                                shape = [1, 1, 64, 32],
+                                initializer = tf.truncated_normal_initializer(mean=0, stddev=0.005))
+            biases = self.variable_on_cpu('biases', [32], tf.constant_initializer(0.01))
+            conv = tf.nn.conv2d(z_conv1, weights, strides=[1, 1, 1, 1], padding='VALID')
+            a_conv = tf.nn.bias_add(conv, biases)
+            z_conv2 = tf.nn.relu(a_conv)
+            sr_net_parms.append(weights)
+            sr_net_parms.append(biases)
+
+        #conv3, reconstruction
+        with tf.variable_scope('srcnn_conv3') as scope:
+            weights = self.variable_on_cpu('wights',
+                                shape = [5, 5, 32, 3],
+                                initializer = tf.truncated_normal_initializer(mean=0, stddev=0.005))
+            biases = self.variable_on_cpu('biases', [3], tf.constant_initializer(0.01))
+            conv = tf.nn.conv2d(z_conv2, weights, strides=[1, 1, 1, 1], padding='VALID')
+            a_conv = tf.nn.bias_add(conv, biases)
+            z_conv3 = tf.nn.relu(a_conv)
+            sr_net_parms.append(weights)
+            sr_net_parms.append(biases)
+
+        predict_images = z_conv3
+
+        return predict_images, sr_net_parms

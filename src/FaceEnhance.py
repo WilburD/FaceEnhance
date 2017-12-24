@@ -37,52 +37,50 @@ def train(iters, batch_size, train_num, model_path, image_size):
     coarse_images, coarse_parms = goodnet.coarse_net_model(batch_size, image_size, image_size)
     coarse_loss = goodnet.coarse_loss(coarse_images)
 
-    fine_images, fine_parms = goodnet.fine_net_model(coarse_images, batch_size, image_size, image_size)
+    fine_images, fine_parms = goodnet.fine_net_model(xs, batch_size, image_size, image_size)
     fine_loss = goodnet.fine_loss(fine_images)
 
-    coarse_train_step = tf.train.GradientDescentOptimizer(0.02).minimize(coarse_loss, 
+    coarse_train_step = tf.train.GradientDescentOptimizer(0.005).minimize(coarse_loss, 
                                                                         var_list=coarse_parms)
-    # print(coarse_parms)
-    fine_train_step = tf.train.GradientDescentOptimizer(0.02).minimize(fine_loss, 
+
+    fine_train_step = tf.train.GradientDescentOptimizer(0.002).minimize(fine_loss, 
                                                                         var_list=fine_parms)
 
     saver = tf.train.Saver()
     file_log = open('log.txt', 'wt')
     with tf.Session() as sess:
-        sess.run(tf.global_variables_initializer())
-        # saver.restore(sess, model_path)
+        # sess.run(tf.global_variables_initializer())
+        saver.restore(sess, model_path)
         # writer = tf.summary.FileWriter('./graphs', sess.graph)
 
-        flag = 0
+        flag = 1
         for i in range(iters):
             print('--------------------------------------------------------------')
             file_log.write('--------------------------------------------------------------\n')
 
             for t in range(0, train_num, batch_size):
                 xs_batch, ys_batch = inputs(t, t+batch_size, image_size)
-
-                # cost1 = sess.run(coarse_loss, feed_dict={xs: xs_batch, ys: ys_batch})
-                # cost2 = sess.run(fine_loss, feed_dict={xs: xs_batch, ys: ys_batch})
                 if flag == 1:
                     sess.run(coarse_train_step, feed_dict={xs:xs_batch, ys:ys_batch})
+                    sess.run(fine_train_step, feed_dict={xs:xs_batch, ys:ys_batch})
                 else:
                     sess.run(fine_train_step, feed_dict={xs:xs_batch, ys:ys_batch})
                 if t % 1 == 0:
                     cost1 = sess.run(coarse_loss, feed_dict={xs: xs_batch, ys: ys_batch})
                     cost2 = sess.run(fine_loss, feed_dict={xs: xs_batch, ys: ys_batch})
                     print('iters:%s,batch:%s, loss1:%s,loss2:%s' % (i, t, cost1, cost2))
-                    file_log.write('iters:%s,batch:%s, loss1:%s,loss2:%s' % (i, t, cost1, cost2))
-            if i % 100 == 0:
-                xs_batch, ys_batch = inputs(0, batch_size, image_size)
-                cost1 = sess.run(coarse_loss, feed_dict={xs: xs_batch, ys: ys_batch})
-                cost2 = sess.run(fine_loss, feed_dict={xs: xs_batch, ys: ys_batch})
-                print('************cost1:%s, cost2:%s **********' % (cost1, cost2))
-                if cost1 < cost2:
-                    flag = 0
-                else:
-                    flag = 1
+                    file_log.write('iters:%s,batch:%s, loss1:%s,loss2:%s \n' % (i, t, cost1, cost2))
+            # if i % 200 == 0:
+            #     xs_batch, ys_batch = inputs(0, batch_size, image_size)
+            #     cost1 = sess.run(coarse_loss, feed_dict={xs: xs_batch, ys: ys_batch})
+            #     cost2 = sess.run(fine_loss, feed_dict={xs: xs_batch, ys: ys_batch})
+            #     print('************cost1:%s, cost2:%s **********' % (cost1, cost2))
+            #     if cost1 < cost2:
+            #         flag = 0
+            #     else:
+            #         flag = 1
 
-            if i % 200 == 0:
+            if i % 100 == 0:
                 xs_batch, ys_batch = inputs(0, batch_size, image_size)
                 predict_images1 = sess.run(coarse_images[0], feed_dict={xs: xs_batch, ys: ys_batch})
                 predict_images2 = sess.run(fine_images[0], feed_dict={xs: xs_batch, ys: ys_batch})
@@ -102,38 +100,40 @@ def train(iters, batch_size, train_num, model_path, image_size):
     sess.close()
 
 # 预测
-def predict(input_image, label_image, save_path, image_size, it):
+def predict(input_image, label_image, save_path, image_size, it, batch_size):
     goodnet = GoodNet.GoodNet(tf.cast(input_image ,tf.float32), 0)
-    coarse_images, p1 = goodnet.coarse_net_model(1, image_size, image_size)
-
-    fine_images, p2= goodnet.fine_net_model(coarse_images, 1, image_size, image_size)
+    coarse_images, p1 = goodnet.coarse_net_model(batch_size, image_size, image_size)
+    fine_images, p2 = goodnet.fine_net_model(coarse_images, batch_size, image_size, image_size)
 
     saver = tf.train.Saver()
+    print(coarse_images)
     with tf.Session() as sess:
         saver.restore(sess, save_path)
         predict_image1 = coarse_images.eval(session = sess)
         predict_image2 = fine_images.eval(session = sess)
         fig = plt.figure()
-        ax = fig.add_subplot(2, 2, 1)
-        ax.imshow(input_image[0])
-        plt.axis('off')
-        ax = fig.add_subplot(2, 2, 2)
-        ax.imshow(label_image[0])
-        plt.axis('off')
-        ax = fig.add_subplot(2, 2, 3)
-        ax.imshow(predict_image1[0])
-        plt.axis('off')
-        ax = fig.add_subplot(2, 2, 4)
-        ax.imshow(predict_image2[0])
-        plt.axis('off')
-        plt.savefig('/home/wanglei/图片/' + str(it) + '.png')
-        plt.show()
+        num = batch_size + it
+        for t in range(it, num):
+            ax = fig.add_subplot(2, 2, 1)
+            ax.imshow(input_image[t - it])
+            plt.axis('off')
+            ax = fig.add_subplot(2, 2, 2)
+            ax.imshow(label_image[t - it])
+            plt.axis('off')
+            ax = fig.add_subplot(2, 2, 3)
+            ax.imshow(predict_image1[t - it])
+            plt.axis('off')
+            ax = fig.add_subplot(2, 2, 4)
+            ax.imshow(predict_image2[t - it])
+            plt.axis('off')
+            plt.savefig('/home/wanglei/图片/' + str(t) + '.png')
+        # plt.show()
 
 # 训练测试UNet model
 def u_net_main():
-    iters = 50000 # 迭代次数
-    batch_size = 1
-    train_num = 1 # 训练集数量
+    iters = 200000 # 迭代次数
+    batch_size = 16
+    train_num = 16 # 训练集数量
     image_size = 256
     model_path_unet = '/home/wanglei/wl/model/model_unet.ckpt' # UNet model 256x256
 
@@ -144,12 +144,13 @@ def u_net_main():
     # x = imagedata.get_image_by_path('/home/wanglei/图片/test1.jpg')
     # y = imagedata.get_image_by_path('/home/wanglei/图片/test1.jpg')
 
-    t = 20
-    x, y = inputs(t, t+1, image_size)
+    t = 100
+    num = 10
+    x, y = inputs(t, t+num, image_size)
 
     if image_size == 256:
         train(iters, batch_size, train_num, model_path_unet, image_size)
-        # predict(x, y, model_path_unet, image_size, t)
+        # predict(x, y, model_path_unet, image_size, t, num)
     return 0
 
 u_net_main()
