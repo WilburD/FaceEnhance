@@ -37,13 +37,13 @@ def train(iters, batch_size, train_num, model_path, image_size):
     coarse_images, coarse_parms = goodnet.coarse_net_model(batch_size, image_size, image_size)
     coarse_loss = goodnet.coarse_loss(coarse_images)
 
-    fine_images, fine_parms = goodnet.fine_net_model(xs, batch_size, image_size, image_size)
+    fine_images, fine_parms = goodnet.fine_net_model(coarse_images, batch_size, image_size, image_size)
     fine_loss = goodnet.fine_loss(fine_images)
 
-    coarse_train_step = tf.train.GradientDescentOptimizer(0.005).minimize(coarse_loss, 
+    coarse_train_step = tf.train.GradientDescentOptimizer(0.12).minimize(coarse_loss, 
                                                                         var_list=coarse_parms)
 
-    fine_train_step = tf.train.GradientDescentOptimizer(0.002).minimize(fine_loss, 
+    fine_train_step = tf.train.GradientDescentOptimizer(0.08).minimize(fine_loss, 
                                                                         var_list=fine_parms)
 
     saver = tf.train.Saver()
@@ -103,7 +103,7 @@ def train(iters, batch_size, train_num, model_path, image_size):
 def predict(input_image, label_image, save_path, image_size, it, batch_size):
     goodnet = GoodNet.GoodNet(tf.cast(input_image ,tf.float32), 0)
     coarse_images, p1 = goodnet.coarse_net_model(batch_size, image_size, image_size)
-    fine_images, p2 = goodnet.fine_net_model(coarse_images, batch_size, image_size, image_size)
+    fine_images, p2 = goodnet.fine_net_model(input_image, batch_size, image_size, image_size)
 
     saver = tf.train.Saver()
     print(coarse_images)
@@ -132,8 +132,8 @@ def predict(input_image, label_image, save_path, image_size, it, batch_size):
 # 训练测试UNet model
 def u_net_main():
     iters = 200000 # 迭代次数
-    batch_size = 16
-    train_num = 16 # 训练集数量
+    batch_size = 4
+    train_num = 4 # 训练集数量
     image_size = 256
     model_path_unet = '/home/wanglei/wl/model/model_unet.ckpt' # UNet model 256x256
 
@@ -144,7 +144,7 @@ def u_net_main():
     # x = imagedata.get_image_by_path('/home/wanglei/图片/test1.jpg')
     # y = imagedata.get_image_by_path('/home/wanglei/图片/test1.jpg')
 
-    t = 100
+    t = 0
     num = 10
     x, y = inputs(t, t+num, image_size)
 

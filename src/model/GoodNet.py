@@ -188,30 +188,20 @@ class GoodNet:
             z_conv11, weights, biases = self.conv_layer(self.images, 3, 3, 64)
             u_net_2_parms.append(weights)
             u_net_2_parms.append(biases)
-        # conv12
-        with tf.variable_scope('u_net2_conv12') as scope:
-            z_conv12, weights, biases = self.conv_layer(z_conv11, 3, 64, 64)
-            u_net_2_parms.append(weights)
-            u_net_2_parms.append(biases)
 
         # pool1 下采样1
         with tf.variable_scope('u_net2_pool1') as scope:
-            h_pool1 = self.pool_layer(z_conv12)
+            h_pool1 = self.pool_layer(z_conv11)
         
         # conv21
         with tf.variable_scope('u_net2_conv21') as scope:
             z_conv21, weights, biases = self.conv_layer(h_pool1, 3, 64, 128)
             u_net_2_parms.append(weights)
             u_net_2_parms.append(biases)
-        # conv22
-        with tf.variable_scope('u_net2_conv22') as scope:
-            z_conv22, weights, biases = self.conv_layer(z_conv21, 3, 128, 128)
-            u_net_2_parms.append(weights)
-            u_net_2_parms.append(biases)
         
         # pool2 下采样2
         with tf.variable_scope('u_net2_pool2') as scope:
-            h_pool2 = self.pool_layer(z_conv22)
+            h_pool2 = self.pool_layer(z_conv21)
         
         # conv31
         with tf.variable_scope('u_net2_conv31') as scope:
@@ -231,39 +221,29 @@ class GoodNet:
 
         # conv41
         with tf.variable_scope('u_net2_conv41') as scope:
-            inputs = tf.concat([z_conv22, deconv1], axis=3)
+            inputs = tf.concat([z_conv21, deconv1], axis=3)
             z_conv41, weights, biases = self.conv_layer(inputs, 3, 256, 128)
-            u_net_2_parms.append(weights)
-            u_net_2_parms.append(biases)
-        # conv42
-        with tf.variable_scope('u_net2_conv42') as scope:
-            z_conv42, weights, biases = self.conv_layer(z_conv41, 3, 128, 128)
             u_net_2_parms.append(weights)
             u_net_2_parms.append(biases)
 
         # deconv2 上采样2
         with tf.variable_scope('u_net2_deconv2') as scope:
-            deconv2, kfilters = self.deconv_layer(z_conv42, 3, batch_size, width1, height1, 128, 64)
+            deconv2, kfilters = self.deconv_layer(z_conv41, 3, batch_size, width1, height1, 128, 64)
             u_net_2_parms.append(kfilters)
             
         # conv51
         with tf.variable_scope('u_net2_conv51') as scope:
-            inputs = tf.concat([z_conv12, deconv2], axis=3)
-            z_conv51, weights, biases = self.conv_layer(inputs, 5, 128, 64)
+            inputs = tf.concat([z_conv11, deconv2], axis=3)
+            z_conv51, weights, biases = self.conv_layer(inputs, 3, 128, 64)
             u_net_2_parms.append(weights)
             u_net_2_parms.append(biases)
         # conv52
         with tf.variable_scope('u_net2_conv52') as scope:
-            z_conv52, weights, biases = self.conv_layer(z_conv51, 3, 64, 64)
-            u_net_2_parms.append(weights)
-            u_net_2_parms.append(biases)
-        # conv53
-        with tf.variable_scope('u_net2_conv53') as scope:
-            z_conv53, weights, biases = self.conv_layer(z_conv52, 3, 64, 3)
+            z_conv52, weights, biases = self.conv_layer(z_conv51, 3, 64, 3)
             u_net_2_parms.append(weights)
             u_net_2_parms.append(biases)
         
-        predict_images = z_conv53
+        predict_images = z_conv52
         return predict_images, u_net_2_parms
 
     # 子网络结构: SRCNN 超分辨率卷积网络

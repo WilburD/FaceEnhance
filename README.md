@@ -12,7 +12,6 @@
 ## 测试
 #### 测试1
 loss = 0.00070
-![image](https://github.com/wangleihitcs/face-enhance/raw/master/resource/test2.png)
 
 #### 测试2
 loss = 0.00028
