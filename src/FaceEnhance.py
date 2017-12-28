@@ -4,6 +4,7 @@ import numpy as np
 import FaceInput
 from model import GoodNet
 import matplotlib.pyplot as plt
+import random
 
 # 处理获取数据集
 def inputs(start, end, image_size):
@@ -40,14 +41,15 @@ def train(iters, batch_size, train_num, model_path, image_size):
     fine_images, fine_parms = goodnet.fine_net_model(xs, batch_size, image_size, image_size)
     fine_loss = goodnet.fine_loss(fine_images)
 
-    coarse_train_step = tf.train.GradientDescentOptimizer(0.1).minimize(coarse_loss, 
+    coarse_train_step = tf.train.GradientDescentOptimizer(0.08).minimize(coarse_loss, 
                                                                         var_list=coarse_parms)
 
-    fine_train_step = tf.train.GradientDescentOptimizer(0.08).minimize(fine_loss, 
-                                                                        var_list=fine_parms)
+    fine_train_step = tf.train.GradientDescentOptimizer(0.01).minimize(fine_loss, 
+                                                                    var_list=fine_parms)                                                                  
 
     saver = tf.train.Saver()
     file_log = open('log.txt', 'wt')
+    y = []
     with tf.Session() as sess:
         # sess.run(tf.global_variables_initializer())
         saver.restore(sess, model_path)
@@ -58,16 +60,18 @@ def train(iters, batch_size, train_num, model_path, image_size):
             print('--------------------------------------------------------------')
             file_log.write('--------------------------------------------------------------\n')
 
-            for t in range(0, train_num, batch_size):
+            for k in range(0, train_num, batch_size*5):
+                t = random.randint(0, train_num-1)
                 xs_batch, ys_batch = inputs(t, t+batch_size, image_size)
                 if flag == 1:
                     sess.run(coarse_train_step, feed_dict={xs:xs_batch, ys:ys_batch})
                 else:
                     sess.run(fine_train_step, feed_dict={xs:xs_batch, ys:ys_batch})
-                if t % 128 == 0:
+                if k % 100 == 0:
                     cost1 = sess.run(coarse_loss, feed_dict={xs: xs_batch, ys: ys_batch})
-                    # cost2 = sess.run(fine_loss, feed_dict={xs: xs_batch, ys: ys_batch})
-                    cost2 = 1
+                    cost2 = sess.run(fine_loss, feed_dict={xs: xs_batch, ys: ys_batch})
+                    y.append(cost1)
+                    # cost2 = 1
                     print('iters:%s,batch:%s, loss1:%s,loss2:%s' % (i, t, cost1, cost2))
                     file_log.write('iters:%s,batch:%s, loss1:%s,loss2:%s \n' % (i, t, cost1, cost2))
             # if i % 200 == 0:
@@ -80,7 +84,7 @@ def train(iters, batch_size, train_num, model_path, image_size):
             #     else:
             #         flag = 1
 
-            if i % 50 == 0:
+            if i % 1 == 0:
                 xs_batch, ys_batch = inputs(0, batch_size, image_size)
                 predict_images1 = xs_batch[0]
                 predict_images2 = sess.run(coarse_images[0], feed_dict={xs: xs_batch, ys: ys_batch})
@@ -101,12 +105,20 @@ def train(iters, batch_size, train_num, model_path, image_size):
                 plt.axis('off')
                 plt.savefig('/home/wanglei/图片/' + str(i) + '.png')
                 # plt.show()
+                draw_loss(y)
                 saver.save(sess, model_path)
                 print('***********************保存成功***********************')
     
     # writer.close()
     sess.close()
 
+def draw_loss(y):
+    x = range(0, len(y))
+    plt.figure()
+    plt.plot(x, y, '')
+    plt.xlabel('iters')
+    plt.ylabel('losss')
+    plt.savefig('/home/wanglei/图片/00.png')
 # 预测
 def predict(input_image, label_image, save_path, image_size, it, batch_size):
     goodnet = GoodNet.GoodNet(tf.cast(input_image ,tf.float32), 0)
@@ -140,8 +152,8 @@ def predict(input_image, label_image, save_path, image_size, it, batch_size):
 # 训练测试UNet model
 def u_net_main():
     iters = 200000 # 迭代次数
-    batch_size = 32
-    train_num = 512 # 训练集数量
+    batch_size = 1
+    train_num = 5000 # 训练集数量
     image_size = 256
     model_path_unet = '/home/wanglei/wl/model/model_unet.ckpt' # UNet model 256x256
 
