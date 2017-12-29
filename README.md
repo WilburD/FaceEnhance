@@ -14,4 +14,4 @@
 ## 测试
 #### 测试1
 coarse_loss = 0.0007, fine_loss = 0.0010
-![image](https://github.com/wangleihitcs/face-enhance/raw/master/resource/test1.pn极
+![image](https://github.com/wangleihitcs/face-enhance/raw/master/resource/test1.png)
