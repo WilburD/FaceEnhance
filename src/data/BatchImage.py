@@ -9,7 +9,7 @@ def shrink_image(inputpath, outputpath, size):
     image.save(outputpath)
 
 # 讲图片存储到相应文件夹, 随机打乱
-def save_image(inputpath, outpath_guides, outpath_degens, outpath_labels):
+def save_image(inputpath, outpath_guides, outpath_degens, outpath_labels, num):
     os.mkdir(outpath_guides)
     os.mkdir(outpath_degens)
     os.mkdir(outpath_labels)
@@ -21,11 +21,11 @@ def save_image(inputpath, outpath_guides, outpath_degens, outpath_labels):
     list_name = sorted(list_name)
 
     list_name_s = []
-    for i in range(5000):
+    for i in range(num):
         list_name_s.append(list_name[i])
     random.shuffle(list_name_s)
 
-    for i in range(5000):
+    for i in range(num):
         t = i + 1
         s = str(t).zfill(5)
         image = Image.open(inputpath + '/' + list_name_s[i])
@@ -59,7 +59,7 @@ outpath_guides = '/home/wanglei/wl/data/webface_guides'
 outpath_degens = '/home/wanglei/wl/data/webface_degens'
 outpath_labels = '/home/wanglei/wl/data/webface_labels'
 
-# save_image(inputpath, outpath_guides, outpath_degens, outpath_labels)
+# save_image(inputpath, outpath_guides, outpath_degens, outpath_labels, 8000)
 # random_sort(outpath_guides)
 # downscale_image(outpath_guides, '/home/wanglei/wl/data/webface_guides_64x64', 64)
 # downscale_image(outpath_degens, '/home/wanglei/wl/data/webface_degens_64x64', 64)

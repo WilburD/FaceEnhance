@@ -5,14 +5,13 @@
 本系统目的是使模糊的人脸图片变清晰。
 
 ## 网络结构
-#### 第一阶段
+基于Coarse-to-Fine结构，具体网络结构，略。
+#### Coarse Stage
 
-#### 第二阶段
+#### Fine Stage
+
 
 ## 测试
 #### 测试1
-loss = 0.00070
-
-#### 测试2
-loss = 0.00028
-![image](https://github.com/wangleihitcs/face-enhance/raw/master/resource/test3.png)
+coarse_loss = 0.0007, fine_loss = 0.0010
+![image](https://github.com/wangleihitcs/face-enhance/raw/master/resource/test1.png)
