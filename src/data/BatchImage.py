@@ -31,7 +31,8 @@ def save_image(inputpath, outpath_guides, outpath_degens, outpath_labels, num):
         image = Image.open(inputpath + '/' + list_name_s[i])
         image_guide = image.crop((0, 0, 256, 256))
         image_label = image.crop((256, 0, 512, 256))
-        image_degen = image_label.filter(ImageFilter.GaussianBlur(radius=3))
+        r = random.randint(1, 3)
+        image_degen = image_label.filter(ImageFilter.GaussianBlur(radius=r))
 
         image_guide.save(outpath_guides + '/guide_' + s + '.png')
         image_degen.save(outpath_degens + '/degen_' + s + '.png')
@@ -59,7 +60,7 @@ outpath_guides = '/home/wanglei/wl/data/webface_guides'
 outpath_degens = '/home/wanglei/wl/data/webface_degens'
 outpath_labels = '/home/wanglei/wl/data/webface_labels'
 
-# save_image(inputpath, outpath_guides, outpath_degens, outpath_labels, 8000)
+save_image(inputpath, outpath_guides, outpath_degens, outpath_labels, 10000)
 # random_sort(outpath_guides)
 # downscale_image(outpath_guides, '/home/wanglei/wl/data/webface_guides_64x64', 64)
 # downscale_image(outpath_degens, '/home/wanglei/wl/data/webface_degens_64x64', 64)

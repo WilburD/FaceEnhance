@@ -34,7 +34,7 @@ def train(iters, batch_size, train_num, model_path, image_size):
     xs = tf.placeholder(tf.float32, [None, image_size, image_size, 3])
     ys = tf.placeholder(tf.float32, [None, image_size, image_size, 3])
     learning_rate = tf.placeholder(tf.float32)
-
+    
     goodnet = GoodNet.GoodNet(xs, ys)
     coarse_images, coarse_parms = goodnet.coarse_net_model(batch_size, image_size, image_size)
     coarse_loss = goodnet.coarse_loss(coarse_images)
@@ -56,14 +56,14 @@ def train(iters, batch_size, train_num, model_path, image_size):
     init_fine_parms = tf.variables_initializer(fine_parms, name = 'init_fine')
     with tf.Session() as sess:
         saver.restore(sess, model_path)
-        # sess.run(init_coarse_parms)
-        # sess.run(init_fine_parms)
+        sess.run(init_coarse_parms)
+        sess.run(init_fine_parms)
         # saver.restore(sess, model_path)
         # writer = tf.summary.FileWriter('./graphs', sess.graph)
 
         flag = 1
-        for i in range(51, iters, 1):
-            if i >= 51:
+        for i in range(0, iters, 1):
+            if i >= 200:
                 flag = 0
             print('--------------------------------------------------------------')
             file_log.write('--------------------------------------------------------------\n')
@@ -72,21 +72,12 @@ def train(iters, batch_size, train_num, model_path, image_size):
                 xs_batch, ys_batch = inputs(t, t+batch_size, image_size)
 
                 if flag == 1:
-                    if i <= 30:
-                        sess.run(coarse_train_step, feed_dict={xs:xs_batch, ys:ys_batch, learning_rate:0.001})
-                    elif i > 30 and i <= 50:
-                        sess.run(coarse_train_step, feed_dict={xs:xs_batch, ys:ys_batch, learning_rate:0.001})
+                    # if i <= 30:
+                    sess.run(coarse_train_step, feed_dict={xs:xs_batch, ys:ys_batch, learning_rate:0.001})
+                    # elif i > 30 and i <= 50:
+                    #     sess.run(coarse_train_step, feed_dict={xs:xs_batch, ys:ys_batch, learning_rate:0.001})
                 else:
-                    # if i > 300 and i <= 330:
-                    #     sess.run(fine_train_step, feed_dict={xs:xs_batch, ys:ys_batch, learning_rate:0.01})
-                    # elif i > 330 and i <= 370:
-                    #     sess.run(fine_train_step, feed_dict={xs:xs_batch, ys:ys_batch, learning_rate:0.005})
-                    # elif i > 370 and i <= 420:
-                    #     sess.run(fine_train_step, feed_dict={xs:xs_batch, ys:ys_batch, learning_rate:0.001})
-                    # elif i > 420 and i <= 500:
-                    #     sess.run(fine_train_step, feed_dict={xs:xs_batch, ys:ys_batch, learning_rate:0.0005})
-                    # elif i > 500 and i <= 600:
-                    sess.run(fine_train_step, feed_dict={xs:xs_batch, ys:ys_batch, learning_rate:0.005})
+                    sess.run(fine_train_step, feed_dict={xs:xs_batch, ys:ys_batch, learning_rate:0.001})
                 
                 if k % 10 == 0:
                     cost1 = sess.run(coarse_loss, feed_dict={xs: xs_batch, ys: ys_batch})
@@ -95,13 +86,13 @@ def train(iters, batch_size, train_num, model_path, image_size):
                         y1.append(cost1)
                     else:
                         y2.append(cost2)
-                    if k % 100 == 0:
-                        if cost2 > 0.001:
-                            print('\033[1;35m iters:%s,batch:%s, loss1:%s,loss2:%s \033[0m' % (i, t, cost1, cost2))
-                            file_log.write('iters:%s,batch:%s, loss1:%s,loss2:%s\n' % (i, t, cost1, cost2))
-                        else:    
-                            print('iters:%s,batch:%s, loss1:%s,loss2:%s' % (i, t, cost1, cost2))
-                            file_log.write('iters:%s,batch:%s, loss1:%s,loss2:%s \n' % (i, t, cost1, cost2))
+                    if k % 200 == 0:
+                        # if cost2 > 0.001:
+                        print('\033[1;35m iters:%s,batch:%s, loss1:%s,loss2:%s \033[0m' % (i, t, cost1, cost2))
+                        file_log.write('iters:%s,batch:%s, loss1:%s,loss2:%s\n' % (i, t, cost1, cost2))
+                        # else:    
+                        #     print('iters:%s,batch:%s, loss1:%s,loss2:%s' % (i, t, cost1, cost2))
+                        #     file_log.write('iters:%s,batch:%s, loss1:%s,loss2:%s \n' % (i, t, cost1, cost2))
 
             if i % 1 == 0:
                 if flag == 1:
@@ -110,7 +101,7 @@ def train(iters, batch_size, train_num, model_path, image_size):
                     draw_loss(y2, '0.2')
 
             if i % 10 == 0:
-                xs_batch, ys_batch = inputs(0, batch_size, image_size)
+                xs_batch, ys_batch = inputs(9998, 9998+batch_size, image_size)
                 predict_images1 = xs_batch[0]
                 predict_images2 = sess.run(coarse_images[0], feed_dict={xs: xs_batch, ys: ys_batch})
                 predict_images3 = sess.run(fine_images[0], feed_dict={xs: xs_batch, ys: ys_batch})
@@ -176,7 +167,7 @@ def predict(input_image, label_image, save_path, image_size, it, batch_size):
 
 # 训练测试UNet model
 def u_net_main():
-    iters = 500 # 迭代次数
+    iters = 400 # 迭代次数
     batch_size = 1
     train_num = 5000 # 训练集数量
     image_size = 256
@@ -189,13 +180,13 @@ def u_net_main():
     # x = imagedata.get_image_by_path('/home/wanglei/图片/test1.jpg')
     # y = imagedata.get_image_by_path('/home/wanglei/图片/test1.jpg')
 
-    t = 5200
+    t = 5100
     num = 10
     x, y = inputs(t, t+num, image_size)
 
     if image_size == 256:
-        train(iters, batch_size, train_num, model_path_unet, image_size)
-        # predict(x, y, model_path_unet, image_size, t, num)
+        # train(iters, batch_size, train_num, model_path_unet, image_size)
+        predict(x, y, model_path_unet, image_size, t, num)
     return 0
 
 u_net_main()

@@ -123,6 +123,7 @@ class GoodNet:
 
         Args:
             coarse_images: Tensor, the coarse stage predict_images
+            labels: 
         Returns:
             coares_loss: value is coares stage loss
             
@@ -155,14 +156,15 @@ class GoodNet:
 
         Args:
             fine_images: Tensor, the coarse stage predict_images
+            labels: 
         Returns:
             fine_loss: value is coares stage loss
             
         """
 
-        # fine_loss1 = tf.reduce_mean(tf.square(self.labels[:, 100:200, 120:200] - fine_images[:, 100:200, 120:200]))
-        fine_loss2 = tf.reduce_mean(tf.square(self.labels[:, 0:244, 0:244] - fine_images))
-        return fine_loss2
+        fine_loss1 = tf.reduce_mean(tf.square(self.labels[:, 100:200, 120:200] - fine_images[:, 100:200, 120:200]))
+        # fine_loss2 = tf.reduce_mean(tf.square(self.labels[:, 0:244, 0:244] - fine_images))
+        return fine_loss1
 
     # 子网络结构: 2次下采样U-Net
     def u_net_2_model(self, batch_size, width, height):
