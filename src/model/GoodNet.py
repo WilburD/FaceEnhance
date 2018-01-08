@@ -186,76 +186,76 @@ class GoodNet:
         u_net_2_parms = []
         filter_size = 5
         # conv11
-        with tf.variable_scope('u_net2_conv11') as scope:
+        with tf.variable_scope('u_net2_conv11', reuse=tf.AUTO_REUSE) as scope:
             z_conv11, weights, biases = self.conv_layer(self.images, filter_size, 3, 64)
             u_net_2_parms.append(weights)
             u_net_2_parms.append(biases)
         # conv12
-        with tf.variable_scope('u_net2_conv12') as scope:
+        with tf.variable_scope('u_net2_conv12', reuse=tf.AUTO_REUSE) as scope:
             z_conv12, weights, biases = self.conv_layer(z_conv11, filter_size, 64, 64)
             u_net_2_parms.append(weights)
             u_net_2_parms.append(biases)
 
         # pool1 下采样1
-        with tf.variable_scope('u_net2_pool1') as scope:
+        with tf.variable_scope('u_net2_pool1', reuse=tf.AUTO_REUSE) as scope:
             h_pool1 = self.pool_layer(z_conv12)
         
         # conv21
-        with tf.variable_scope('u_net2_conv21') as scope:
+        with tf.variable_scope('u_net2_conv21', reuse=tf.AUTO_REUSE) as scope:
             z_conv21, weights, biases = self.conv_layer(h_pool1, filter_size, 64, 128)
             u_net_2_parms.append(weights)
             u_net_2_parms.append(biases)
         # conv22
-        with tf.variable_scope('u_net2_conv22') as scope:
+        with tf.variable_scope('u_net2_conv22', reuse=tf.AUTO_REUSE) as scope:
             z_conv22, weights, biases = self.conv_layer(z_conv21, filter_size, 128, 128)
             u_net_2_parms.append(weights)
             u_net_2_parms.append(biases)
         
         # pool2 下采样2
-        with tf.variable_scope('u_net2_pool2') as scope:
+        with tf.variable_scope('u_net2_pool2', reuse=tf.AUTO_REUSE) as scope:
             h_pool2 = self.pool_layer(z_conv22)
         
         # conv31
-        with tf.variable_scope('u_net2_conv31') as scope:
+        with tf.variable_scope('u_net2_conv31', reuse=tf.AUTO_REUSE) as scope:
             z_conv31, weights, biases = self.conv_layer(h_pool2, filter_size, 128, 256)
             u_net_2_parms.append(weights)
             u_net_2_parms.append(biases)
         # conv32
-        with tf.variable_scope('u_net2_conv32') as scope:
+        with tf.variable_scope('u_net2_conv32', reuse=tf.AUTO_REUSE) as scope:
             z_conv32, weights, biases = self.conv_layer(z_conv31, filter_size, 256, 256)
             u_net_2_parms.append(weights)
             u_net_2_parms.append(biases)
 
         # deconv1 上采样1
-        with tf.variable_scope('u_net2_deconv1') as scope:
+        with tf.variable_scope('u_net2_deconv1', reuse=tf.AUTO_REUSE) as scope:
             deconv1, kfilters = self.deconv_layer(z_conv32, filter_size, batch_size, width2, height2, 256, 128)
             u_net_2_parms.append(kfilters)
 
         # conv41
-        with tf.variable_scope('u_net2_conv41') as scope:
+        with tf.variable_scope('u_net2_conv41', reuse=tf.AUTO_REUSE) as scope:
             inputs = tf.concat([z_conv21, deconv1], axis=3)
             z_conv41, weights, biases = self.conv_layer(inputs, filter_size, 256, 128)
             u_net_2_parms.append(weights)
             u_net_2_parms.append(biases)
         # conv42
-        with tf.variable_scope('u_net2_conv42') as scope:
+        with tf.variable_scope('u_net2_conv42', reuse=tf.AUTO_REUSE) as scope:
             z_conv42, weights, biases = self.conv_layer(z_conv41, filter_size, 128, 128)
             u_net_2_parms.append(weights)
             u_net_2_parms.append(biases)
 
         # deconv2 上采样2
-        with tf.variable_scope('u_net2_deconv2') as scope:
+        with tf.variable_scope('u_net2_deconv2', reuse=tf.AUTO_REUSE) as scope:
             deconv2, kfilters = self.deconv_layer(z_conv42, filter_size, batch_size, width1, height1, 128, 64)
             u_net_2_parms.append(kfilters)
             
         # conv51
-        with tf.variable_scope('u_net2_conv51') as scope:
+        with tf.variable_scope('u_net2_conv51', reuse=tf.AUTO_REUSE) as scope:
             inputs = tf.concat([z_conv11, deconv2], axis=3)
             z_conv51, weights, biases = self.conv_layer(inputs, filter_size, 128, 64)
             u_net_2_parms.append(weights)
             u_net_2_parms.append(biases)
         # conv52
-        with tf.variable_scope('u_net2_conv52') as scope:
+        with tf.variable_scope('u_net2_conv52', reuse=tf.AUTO_REUSE) as scope:
             z_conv52, weights, biases = self.conv_layer(z_conv51, filter_size, 64, 3)
             u_net_2_parms.append(weights)
             u_net_2_parms.append(biases)
@@ -282,7 +282,7 @@ class GoodNet:
         sr_net_parms = []
 
         # conv1, patch extraction and representation
-        with tf.variable_scope('srcnn_conv1') as scope:
+        with tf.variable_scope('srcnn_conv1', reuse=tf.AUTO_REUSE) as scope:
             weights = self.variable_on_cpu('wights',
                                 shape = [9, 9, 3, 64],
                                 initializer = tf.truncated_normal_initializer(mean=0, stddev=0.001))
@@ -294,7 +294,7 @@ class GoodNet:
             sr_net_parms.append(biases)
 
         # conv2, non-liner mapping
-        with tf.variable_scope('srcnn_conv2') as scope:
+        with tf.variable_scope('srcnn_conv2', reuse=tf.AUTO_REUSE) as scope:
             weights = self.variable_on_cpu('wights',
                                 shape = [1, 1, 64, 32],
                                 initializer = tf.truncated_normal_initializer(mean=0, stddev=0.001))
@@ -306,7 +306,7 @@ class GoodNet:
             sr_net_parms.append(biases)
 
         #conv3, reconstruction
-        with tf.variable_scope('srcnn_conv3') as scope:
+        with tf.variable_scope('srcnn_conv3', reuse=tf.AUTO_REUSE) as scope:
             weights = self.variable_on_cpu('wights',
                                 shape = [5, 5, 32, 3],
                                 initializer = tf.truncated_normal_initializer(mean=0, stddev=0.001))

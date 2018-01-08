@@ -58,50 +58,48 @@ def train(iters, batch_size, train_num, model_path, image_size):
         saver.restore(sess, model_path)
         sess.run(init_coarse_parms)
         sess.run(init_fine_parms)
-        # saver.restore(sess, model_path)
         # writer = tf.summary.FileWriter('./graphs', sess.graph)
 
         flag = 1
         for i in range(0, iters, 1):
-            if i >= 200:
+            if i >= 100:
                 flag = 0
+                y1 = []
+                y2 = []
             print('--------------------------------------------------------------')
             file_log.write('--------------------------------------------------------------\n')
             for k in range(0, train_num, batch_size):
                 t = random.randint(0, train_num-batch_size)
+                # t = k
                 xs_batch, ys_batch = inputs(t, t+batch_size, image_size)
 
                 if flag == 1:
-                    # if i <= 30:
-                    sess.run(coarse_train_step, feed_dict={xs:xs_batch, ys:ys_batch, learning_rate:0.001})
-                    # elif i > 30 and i <= 50:
-                    #     sess.run(coarse_train_step, feed_dict={xs:xs_batch, ys:ys_batch, learning_rate:0.001})
+                    sess.run(coarse_train_step, feed_dict={xs:xs_batch, ys:ys_batch, learning_rate:0.1})
                 else:
-                    sess.run(fine_train_step, feed_dict={xs:xs_batch, ys:ys_batch, learning_rate:0.001})
-                
-                if k % 10 == 0:
-                    cost1 = sess.run(coarse_loss, feed_dict={xs: xs_batch, ys: ys_batch})
-                    cost2 = sess.run(fine_loss, feed_dict={xs: xs_batch, ys: ys_batch})
+                    sess.run(fine_train_step, feed_dict={xs:xs_batch, ys:ys_batch, learning_rate:0.1})
+             
+                if k % 50 == 0:
+                    cost1 = sess.run(coarse_loss, feed_dict={xs:xs_batch, ys:ys_batch})
+                    cost2 = sess.run(fine_loss, feed_dict={xs:xs_batch, ys:ys_batch})
                     if flag == 1:
                         y1.append(cost1)
+                        y2.append(cost2)
                     else:
+                        y1.append(cost1)
                         y2.append(cost2)
                     if k % 200 == 0:
-                        # if cost2 > 0.001:
-                        print('\033[1;35m iters:%s,batch:%s, loss1:%s,loss2:%s \033[0m' % (i, t, cost1, cost2))
-                        file_log.write('iters:%s,batch:%s, loss1:%s,loss2:%s\n' % (i, t, cost1, cost2))
-                        # else:    
-                        #     print('iters:%s,batch:%s, loss1:%s,loss2:%s' % (i, t, cost1, cost2))
-                        #     file_log.write('iters:%s,batch:%s, loss1:%s,loss2:%s \n' % (i, t, cost1, cost2))
+                        print('epochs:%s,batch:%s, loss1:%s, loss2:%s' % (i, t, cost1, cost2))
+                        file_log.write('epochs:%s,batch:%s, loss1:%s,loss2:%s\n' % (i, t, cost1, cost2))
 
             if i % 1 == 0:
                 if flag == 1:
-                    draw_loss(y1, '0.1')
+                    draw_loss(y1, y2, '0.1')
                 else:
-                    draw_loss(y2, '0.2')
+                    draw_loss(y1, y2, '0.2')
 
-            if i % 10 == 0:
-                xs_batch, ys_batch = inputs(9998, 9998+batch_size, image_size)
+            if i % 2 == 0:
+                z = 8999
+                xs_batch, ys_batch = inputs(z, z+batch_size, image_size)
                 predict_images1 = xs_batch[0]
                 predict_images2 = sess.run(coarse_images[0], feed_dict={xs: xs_batch, ys: ys_batch})
                 predict_images3 = sess.run(fine_images[0], feed_dict={xs: xs_batch, ys: ys_batch})
@@ -127,10 +125,35 @@ def train(iters, batch_size, train_num, model_path, image_size):
     # writer.close()
     sess.close()
 
-def draw_loss(y, str):
-    x = range(0, len(y))
+# 得到测试loss
+def get_test_loss(sess, stage):
+    t = 5000
+    num = 1200
+    image_size = 256
+    batch_size = 30
+    loss = 0
+    for i in range(0, num, batch_size):
+        xs_batch, ys_batch = inputs(t+i, t+i+batch_size, image_size)
+        xs = tf.placeholder(tf.float32, [None, image_size, image_size, 3])
+        ys = tf.placeholder(tf.float32, [None, image_size, image_size, 3])
+        feeding = {xs: xs_batch, ys: ys_batch}
+
+        goodnet = GoodNet.GoodNet(xs, ys)
+        coarse_images, _ = goodnet.coarse_net_model(batch_size, image_size, image_size)
+        coarse_loss = goodnet.coarse_loss(coarse_images)
+        fine_images, _ = goodnet.fine_net_model(coarse_images, batch_size, image_size, image_size)
+        fine_loss = goodnet.fine_loss(fine_images)
+        if(stage == 1):
+            loss += sess.run(coarse_loss, feed_dict=feeding)
+        else:
+            loss += sess.run(fine_loss, feed_dict=feeding)
+    return loss/40
+
+# 绘制图像
+def draw_loss(y, t, str):
     plt.figure()
-    plt.plot(x, y, '')
+    plt.plot(y, 'b')
+    plt.plot(t, 'r')
     plt.xlabel('iters')
     plt.ylabel('losss')
     plt.savefig('/home/wanglei/图片/' + str + '.png')
@@ -142,7 +165,7 @@ def predict(input_image, label_image, save_path, image_size, it, batch_size):
     fine_images, p2 = goodnet.fine_net_model(coarse_images, batch_size, image_size, image_size)
 
     saver = tf.train.Saver()
-    print(coarse_images)
+    # print(coarse_images)
     with tf.Session() as sess:
         saver.restore(sess, save_path)
         predict_image1 = coarse_images.eval(session = sess)
@@ -167,7 +190,7 @@ def predict(input_image, label_image, save_path, image_size, it, batch_size):
 
 # 训练测试UNet model
 def u_net_main():
-    iters = 400 # 迭代次数
+    iters = 200 # 迭代次数
     batch_size = 1
     train_num = 5000 # 训练集数量
     image_size = 256
@@ -185,8 +208,8 @@ def u_net_main():
     x, y = inputs(t, t+num, image_size)
 
     if image_size == 256:
-        # train(iters, batch_size, train_num, model_path_unet, image_size)
-        predict(x, y, model_path_unet, image_size, t, num)
+        train(iters, batch_size, train_num, model_path_unet, image_size)
+        # predict(x, y, model_path_unet, image_size, t, num)
     return 0
 
 u_net_main()
