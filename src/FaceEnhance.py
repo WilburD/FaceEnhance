@@ -56,16 +56,14 @@ def train(iters, batch_size, train_num, model_path, image_size):
     init_fine_parms = tf.variables_initializer(fine_parms, name = 'init_fine')
     with tf.Session() as sess:
         saver.restore(sess, model_path)
-        sess.run(init_coarse_parms)
-        sess.run(init_fine_parms)
+        # sess.run(init_coarse_parms)
+        # sess.run(init_fine_parms)
         # writer = tf.summary.FileWriter('./graphs', sess.graph)
 
         flag = 1
-        for i in range(0, iters, 1):
+        for i in range(100, iters, 1):
             if i >= 100:
                 flag = 0
-                y1 = []
-                y2 = []
             print('--------------------------------------------------------------')
             file_log.write('--------------------------------------------------------------\n')
             for k in range(0, train_num, batch_size):
@@ -190,7 +188,7 @@ def predict(input_image, label_image, save_path, image_size, it, batch_size):
 
 # 训练测试UNet model
 def u_net_main():
-    iters = 200 # 迭代次数
+    iters = 400 # 迭代次数
     batch_size = 1
     train_num = 5000 # 训练集数量
     image_size = 256
@@ -208,8 +206,8 @@ def u_net_main():
     x, y = inputs(t, t+num, image_size)
 
     if image_size == 256:
-        train(iters, batch_size, train_num, model_path_unet, image_size)
-        # predict(x, y, model_path_unet, image_size, t, num)
+        # train(iters, batch_size, train_num, model_path_unet, image_size)
+        predict(x, y, model_path_unet, image_size, t, num)
     return 0
 
 u_net_main()
