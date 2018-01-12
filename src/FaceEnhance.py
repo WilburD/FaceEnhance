@@ -52,6 +52,8 @@ def train(iters, batch_size, train_num, model_path, image_size):
     file_log = open('log.txt', 'wt')
     y1 = []
     y2 = []
+    y11 = []
+    y22 = []
     init_coarse_parms = tf.variables_initializer(coarse_parms, name = 'init_coarse')
     init_fine_parms = tf.variables_initializer(fine_parms, name = 'init_fine')
     with tf.Session() as sess:
@@ -61,41 +63,43 @@ def train(iters, batch_size, train_num, model_path, image_size):
         # writer = tf.summary.FileWriter('./graphs', sess.graph)
 
         flag = 1
-        for i in range(100, iters, 1):
-            if i >= 100:
+        for i in range(0, iters, 1):
+            if i >= 200:
                 flag = 0
             print('--------------------------------------------------------------')
             file_log.write('--------------------------------------------------------------\n')
             for k in range(0, train_num, batch_size):
-                t = random.randint(0, train_num-batch_size)
-                # t = k
+                # t = random.randint(0, train_num-batch_size)
+                t = k
                 xs_batch, ys_batch = inputs(t, t+batch_size, image_size)
 
                 if flag == 1:
-                    sess.run(coarse_train_step, feed_dict={xs:xs_batch, ys:ys_batch, learning_rate:0.1})
+                    sess.run(coarse_train_step, feed_dict={xs:xs_batch, ys:ys_batch, learning_rate:0.01})
                 else:
-                    sess.run(fine_train_step, feed_dict={xs:xs_batch, ys:ys_batch, learning_rate:0.1})
+                    sess.run(fine_train_step, feed_dict={xs:xs_batch, ys:ys_batch, learning_rate:0.01})
              
-                if k % 50 == 0:
+                if k % 16 == 0:
                     cost1 = sess.run(coarse_loss, feed_dict={xs:xs_batch, ys:ys_batch})
                     cost2 = sess.run(fine_loss, feed_dict={xs:xs_batch, ys:ys_batch})
                     if flag == 1:
                         y1.append(cost1)
-                        y2.append(cost2)
+                        y2.append(cost2+0.01)
                     else:
-                        y1.append(cost1)
-                        y2.append(cost2)
+                        y11.append(cost1+0.01)
+                        y22.append(cost2)
                     if k % 200 == 0:
                         print('epochs:%s,batch:%s, loss1:%s, loss2:%s' % (i, t, cost1, cost2))
                         file_log.write('epochs:%s,batch:%s, loss1:%s,loss2:%s\n' % (i, t, cost1, cost2))
 
             if i % 1 == 0:
                 if flag == 1:
+                    y2 = []
                     draw_loss(y1, y2, '0.1')
                 else:
-                    draw_loss(y1, y2, '0.2')
+                    y11 = []
+                    draw_loss(y11, y22, '0.2')
 
-            if i % 2 == 0:
+            if i % 10 == 0:
                 z = 8999
                 xs_batch, ys_batch = inputs(z, z+batch_size, image_size)
                 predict_images1 = xs_batch[0]
@@ -189,7 +193,7 @@ def predict(input_image, label_image, save_path, image_size, it, batch_size):
 # 训练测试UNet model
 def u_net_main():
     iters = 400 # 迭代次数
-    batch_size = 1
+    batch_size = 32
     train_num = 5000 # 训练集数量
     image_size = 256
     model_path_unet = '/home/wanglei/wl/model/model_unet.ckpt' # UNet model 256x256
